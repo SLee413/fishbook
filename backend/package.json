@@ -1,0 +1,14 @@
+{
+  "name": "fishbook-server",
+  "version": "1.0.0",
+  "description": "The backend server for Fishbook",
+  "main": "index.js",
+  "scripts": {
+    "start" : "node ./"
+  },
+  "author": "Spencer Lee",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
