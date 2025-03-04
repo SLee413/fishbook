@@ -1,23 +1,29 @@
-// backend/index.js
+import { Collection, Db } from 'mongodb';
+import { getDatabase } from './clients/mongoclient';
+
 const express = require('express');
 const path = require('path');
 const app = express();
 
-const PORT = process.env.PORT || 5000;
+// Configure environment variables
+import dotenv from 'dotenv';
+dotenv.config();
 
-// Serve static files from the React app
-app.use(express.static(path.join(__dirname, '../frontend/build')));
-
-// Default route for testing
-app.get('/', (req, res) => {
-  res.send('Express Server is running');
+app.use('/', (req, res) => {
+  res.send(200);
 });
 
-// Catch-all route to serve React on any other paths
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/build', 'index.html'));
-});
+// Posts API
+app.route('/posts')
+  .get(async (req, res) => {
+    const database : Db = await getDatabase();
+    const postsCollection : Collection<Comment> = await database.collection("Comments");
 
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-});
+    
+    res.send('feed of posts will go here');
+  })
+  .post((req, res) => {
+    res.send('Add a post here');
+  })
+
+app.listen(5000, () => console.log('API is running on http://localhost:5000/'));
