@@ -9,6 +9,7 @@
   "author": "Spencer Lee",
   "license": "ISC",
   "dependencies": {
+    "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "mongodb": "^6.14.1",
     "typescript": "^5.8.2"
