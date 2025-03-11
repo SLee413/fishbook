@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 /**
  * @file Defines a post object
  * @decription
@@ -8,17 +10,20 @@
  * 
  */
 
-export interface Post {
-	_id: string;
-	authorId : string;
-	datePosted : Date;
 
-	likes: number;
-	imageUrl: string;
-	dateCaught: Date;
-	location: string;			// We need to change this once we figure out what will work best for google maps
+// Create a Zod schema
+export const postSchema = z.object({
+	authorId : z.string(),
+	datePosted : z.date(),
+
+	likes: z.number(),
+	imageUrl: z.string(),
+	dateCaught: z.date(),
+	location: z.string(),			// We need to change this once we figure out what will work best for google maps
 	
-	species?: string;
-	bait?: string;
-	waterType?: string;
-}
+	species: z.string().optional(),
+	bait: z.string().optional(),
+	waterType: z.string().optional(),
+});
+
+export type Post = z.infer<typeof postSchema>;
