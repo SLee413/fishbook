@@ -14,10 +14,8 @@
   .logoContainer {
     display: flex;
     align-items: center;
-  }
-  
-  .logoLink {
     text-decoration: none;
+    cursor: pointer; /* 👈 This makes the cursor change */
   }
   
   .logoText {
@@ -25,6 +23,11 @@
     color: #ffffff;
     margin: 0;
   }
+  .logoLink {
+    text-decoration: none;
+  }
+  
+ 
   
   .nav {
     display: flex;

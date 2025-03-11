@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Header from '../components/Header';
+
 
 const CreatePost = () => {
   const [postContent, setPostContent] = useState('');
@@ -13,7 +13,6 @@ const CreatePost = () => {
 
   return (
     <div>
-      <Header />
       <main style={{ padding: '20px' }}>
         <h2>Create a Post</h2>
         <form onSubmit={handlePostSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxWidth: '400px' }}>
