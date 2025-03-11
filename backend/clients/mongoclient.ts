@@ -10,8 +10,7 @@
 import { MongoClient, Db } from 'mongodb';
 
 // Configure environment variables
-import dotenv from 'dotenv';
-dotenv.config();
+require('dotenv').config();
 
 // Login to the Mongo client
 const uri = `mongodb+srv://${process.env.MONGODB_USER}:${process.env.MONGODB_PASSWORD}@${process.env.MONGODB_HOST}/?retryWrites=true&w=majority`;
