@@ -1,15 +1,18 @@
 import React from 'react';
 
-
 const MapPage = () => {
   return (
-    <div>
-      <main style={{ padding: '20px' }}>
-        <h2>Map Page</h2>
-        <p>This is where the fishing map will be displayed.</p>
-        {/* You can add your map component or integration here */}
-      </main>
-    </div>
+    <main style={{ padding: 0, margin: 0 }}>
+      <img
+        src="/images/redjers.jpg"
+        alt="New Jersey Map"
+        style={{
+          width: '100vw',
+          height: '100vh',
+          objectFit: 'contain',
+        }}
+      />
+    </main>
   );
 };
 
