@@ -4,7 +4,7 @@
   "description": "The backend server for Fishbook",
   "main": "index.js",
   "scripts": {
-    "start" : "node ./"
+    "start": "node ./"
   },
   "author": "Spencer Lee",
   "license": "ISC",
