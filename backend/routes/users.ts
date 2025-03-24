@@ -1,7 +1,7 @@
 /**
- * @file Controls the posts API
+ * @file Controls the users API
  * @description
- * This is an ExpressJS Router that specifically handles posts
+ * This is an ExpressJS Router that specifically handles users
  * 
  * @author Spencer Lee
  * 
@@ -14,22 +14,28 @@ import { Post, postSchema, User, Comment } from '../schemas/index';
 const express = require('express');
 const router = express.Router();
 
-// Get recent posts
-router.get('/', async (req, res) => {
-    // TODO: add options for filters + pagination
+// Get user data
+router.get('/:userid', async (req, res) => {
     const database : Db = await getDatabase();
-    const postsCollection : Collection<Post> = await database.collection("Posts");
+    const usersCollection : Collection<User> = await database.collection("Users");
 
-    let posts = await postsCollection.find()
-        .sort({ createdAt: -1 }) // Sort in descending order by createdAt
-        .limit(10) // Limit the result to 5 documents
-        .toArray(); // Convert the result to an array
+    let user = await usersCollection.findOne({
+        _id : req.params.userid
+    });
 
-    res.send(posts);
+    if (user == null) return res.status(404).send("Invalid user");
+
+    if (user.password) {
+        user.password = null;
+    }
+
+    res.send(user);
+
+    res.sendStatus(200);
 });
 
-// Post creation
-router.post('/user/:userid', async (req, res) => {
+// User creation
+router.get('/create', async (req, res) => {
     try {
         // TODO: check session authentication
         const database : Db = await getDatabase();
@@ -71,4 +77,4 @@ router.post('/user/:userid', async (req, res) => {
     }
 });
   
-export const postsRouter = router;
+export const usersRouter = router;

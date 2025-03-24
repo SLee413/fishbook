@@ -1,14 +1,19 @@
+import { postsRouter, usersRouter } from "./routes";
 const express = require('express');
 const path = require('path');
 const app = express();
 
-const postsRouter = require('./routes/posts');
+
+
 
 // Configure environment variables
 require('dotenv').config();
 
 // Posts API
 app.use('/posts', postsRouter);
+
+// Users API
+app.use('/users', usersRouter);
 
 app.get('/', (req, res) => {
 	res.sendStatus(200);
