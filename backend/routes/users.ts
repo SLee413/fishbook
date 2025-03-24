@@ -21,14 +21,17 @@ router.get('/:userid', async (req, res) => {
     const database : Db = await getDatabase();
     const usersCollection : Collection<User> = await database.collection("Users");
 
+    // Ensure userid is valid
     if (!ObjectId.isValid(req.params.userid)) return res.status(404).send("Invalid user");
 
+    // Find the user
     let user = await usersCollection.findOne({
         _id : new ObjectId(req.params.userid)
     });
 
     if (user == null) return res.status(404).send("Invalid user");
 
+    // Remove password
     if (user.password) {
         delete user["password"]
     }
