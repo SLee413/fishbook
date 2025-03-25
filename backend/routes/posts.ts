@@ -28,6 +28,36 @@ router.get('/', async (req, res) => {
     res.send(posts);
 });
 
+// Get user's posts
+router.get('/user/:userid', async (req, res) => {
+    try {
+        const database : Db = await getDatabase();
+        const postsCollection : Collection<Post> = await database.collection("Posts");
+        const usersCollection : Collection<User> = await database.collection("Users");
+
+        // Ensure userid is valid
+        if (!ObjectId.isValid(req.params.userid)) return res.status(404).send("Invalid user");
+
+        // Ensure user is a valid user
+        let user = await usersCollection.findOne({
+            _id : new ObjectId(req.params.userid)
+        });
+        if (user == null) return res.status(400).send("Invalid user");
+
+        let posts = await postsCollection.find({
+            authorId : user._id
+        })
+            .sort({ createdAt: -1 }) // Sort in descending order by createdAt
+            .limit(10) // Limit the result to 5 documents
+            .toArray(); // Convert the result to an array
+
+
+        res.send(posts);
+    } catch {
+        res.sendStatus(500);
+    }
+});
+
 // Post creation
 router.post('/user/:userid', async (req, res) => {
     try {
@@ -70,5 +100,7 @@ router.post('/user/:userid', async (req, res) => {
         res.sendStatus(500);
     }
 });
-  
+
+
+
 export const postsRouter = router;
