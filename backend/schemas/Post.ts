@@ -21,7 +21,10 @@ export const postSchema = z.object({
 	likes: z.number(),
 	imageUrl: z.string().regex(/.*/),	// TODO: add url regexing
 	dateCaught: z.date(),
-	location: z.string(),			// We need to change this once we figure out what will work best for google maps
+	location: z.object({
+		lat : z.number(),
+		lng : z.number()
+	}),
 	
 	species: z.string().optional(),
 	bait: z.string().optional(),
