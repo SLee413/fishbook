@@ -6,21 +6,45 @@ const LoginPage = ({ onLogin }) => {
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Simulate successful login
-    if (username && password) {
-      onLogin(username);       // Pass username to App
-      navigate('/account');    // Go to account page after login
-    } else {
+    if (!username || !password) {
       alert('Enter username and password!');
+      return;
+    }
+
+    try {
+      // First attempt to register
+      await fetch('http://localhost:5000/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+
+      // Then login
+      const res = await fetch('http://localhost:5000/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        onLogin(username);
+        navigate('/account');
+      } else {
+        alert(data.message);
+      }
+    } catch (err) {
+      alert('Error connecting to server');
     }
   };
 
   return (
     <main style={{ padding: '20px' }}>
-      <h2>Login</h2>
+      <h2>Sign In / Create Account</h2>
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxWidth: '300px' }}>
         <input
           type="text"
@@ -36,7 +60,9 @@ const LoginPage = ({ onLogin }) => {
           onChange={(e) => setPassword(e.target.value)}
           style={{ padding: '10px', fontSize: '16px' }}
         />
-        <button type="submit" style={{ padding: '10px', fontSize: '16px', cursor: 'pointer' }}>Login</button>
+        <button type="submit" style={{ padding: '10px', fontSize: '16px', cursor: 'pointer' }}>
+          Continue
+        </button>
       </form>
     </main>
   );
