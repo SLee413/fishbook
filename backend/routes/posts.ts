@@ -28,9 +28,10 @@ router.get('/', async (req, res) => {
     res.send(posts);
 });
 
-// Get user's posts
-router.get('/user/:userid', async (req, res) => {
+// Post creation
+router.post('/user/:userid', async (req, res) => {
     try {
+        // TODO: check session authentication
         const database : Db = await getDatabase();
         const postsCollection : Collection<Post> = await database.collection("Posts");
         const usersCollection : Collection<User> = await database.collection("Users");
@@ -44,34 +45,6 @@ router.get('/user/:userid', async (req, res) => {
         });
         if (user == null) return res.status(400).send("Invalid user");
 
-        let posts = await postsCollection.find({
-            authorId : user._id
-        })
-            .sort({ createdAt: -1 }) // Sort in descending order by createdAt
-            .limit(10) // Limit the result to 5 documents
-            .toArray(); // Convert the result to an array
-
-
-        res.send(posts);
-    } catch {
-        res.sendStatus(500);
-    }
-});
-
-// Post creation
-router.post('/user/:userid', async (req, res) => {
-    try {
-        // TODO: check session authentication
-        const database : Db = await getDatabase();
-        const postsCollection : Collection<Post> = await database.collection("Posts");
-        const usersCollection : Collection<User> = await database.collection("Users");
-
-        // Ensure user is a valid user
-        let user = await usersCollection.findOne({
-            _id : req.params.userid
-        });
-        if (user == null) return res.status(400).send("Invalid user");
-
         // basic info for new posts
         let newPost : Post = {
             authorId : user._id,
@@ -82,7 +55,12 @@ router.post('/user/:userid', async (req, res) => {
         // Transfer properties from body to post
         for (let property in req.body) {
             if (!newPost[property]) {
-                newPost[property] = req.body[property];
+                // If it's the dateCaught, we turn it into a Date object
+                if (property == "dateCaught") {
+                    newPost[property] = new Date(req.body[property]);
+                } else {
+                    newPost[property] = req.body[property];
+                }
             }
         }
 
