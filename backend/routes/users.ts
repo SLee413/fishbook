@@ -9,7 +9,7 @@
 
 import { Collection, Db, ObjectId } from 'mongodb';
 import { getDatabase } from '../clients/mongoclient';
-import { Post, postSchema, User, Comment } from '../schemas/index';
+import { Post, postSchema, User, Comment, userSchema } from '../schemas/index';
 
 const express = require('express');
 const router = express.Router();
@@ -31,18 +31,48 @@ router.get('/:userid', async (req, res) => {
 
     if (user == null) return res.status(404).send("Invalid user");
 
-    // Remove password
+    // Don't send everyone this user's password
     if (user.password) {
-        delete user["password"]
+        delete user["password"];
     }
 
     res.send(user);
 });
 
 // User creation
-router.get('/create', async (req, res) => {
+router.post('/create', async (req, res) => {
     // TODO: create user enpoint
-    res.sendStatus(500);
+    const database : Db = await getDatabase();
+    const usersCollection : Collection<User> = await database.collection("Users");
+
+    // Get a new user started
+    let newUser : User = {
+        createdAt : new Date(),
+        lastLoginAt : new Date(),
+    }
+
+    // Transfer properties from body to post
+    for (let property in req.body) {
+        if (!newUser[property]) {
+            newUser[property] = req.body[property];
+        }
+    }
+    let result = userSchema.safeParse(newUser);
+
+    // Validate user
+    if (!result.success) return res.status(400).send('Invalid user');
+
+    // Ensure username isn't taken
+    let otherUser = await usersCollection.findOne({
+        name : newUser.name
+    });
+    if (otherUser) return res.status(400).send('Username taken');
+
+    // Add user to collection
+    let userData : User = result.data;
+    usersCollection.insertOne(userData);
+
+    res.status(200).send("session token?");
 });
   
 export const usersRouter = router;

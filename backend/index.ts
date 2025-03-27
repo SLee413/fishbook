@@ -3,11 +3,11 @@ const express = require('express');
 const path = require('path');
 const app = express();
 
-
-
-
 // Configure environment variables
 require('dotenv').config();
+
+// Parse JSON bodies
+app.use(express.json());
 
 // Posts API
 app.use('/posts', postsRouter);

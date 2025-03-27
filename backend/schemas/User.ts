@@ -7,7 +7,7 @@ import { z } from "zod";
  * Defines what fields users will have
  * 
  * @author Spencer Lee
- * @version 2025.3.4
+ * @version 2025.3.25
  * 
  */
 
@@ -17,6 +17,7 @@ export const userSchema = z.object({
 	password : z.string(),
 	bio : z.string(),
 	profilePictureUrl : z.string(),
+	email : z.string(),
 
 	lastLoginAt : z.date(),
 	createdAt: z.date()
