@@ -29,8 +29,10 @@ module.exports = async (request, response, next) => {
 	const usersCollection : Collection<User> = await database.collection("Users");
 
 	let userDoc = await usersCollection.findOne({
-		_id : userId
+		_id : new ObjectId(userId)
 	});
+	console.log(userId)
+
 	if (userDoc == null) return response.status(401).json({error: new Error("Invalid request!")});
 
 	// pass the user down to the endpoints here
