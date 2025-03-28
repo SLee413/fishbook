@@ -13,6 +13,7 @@ import { Post, postSchema, User, Comment, commentSchema } from '../schemas/index
 
 const express = require('express');
 const router = express.Router();
+const auth = require('./authentication');
 
 // Get recent posts
 router.get('/', async (req, res) => {
@@ -29,7 +30,7 @@ router.get('/', async (req, res) => {
 });
 
 // Post creation
-router.post('/user/:userid', async (req, res) => {
+router.post('/user/:userid', auth, async (req, res) => {
     try {
         // TODO: check session authentication
         const database : Db = await getDatabase();
@@ -99,8 +100,7 @@ router.get('/:postid/comments', async (req, res) => {
 });
 
 // Create a comment on a post
-router.post('/:postid/comments', async (req, res) => {
-    // TODO: authentication
+router.post('/:postid/comments', auth, async (req, res) => {
     const database : Db = await getDatabase();
     const postsCollection : Collection<Post> = await database.collection("Posts");
     const commentsCollection : Collection<Comment> = await database.collection("Comments");
@@ -117,8 +117,7 @@ router.post('/:postid/comments', async (req, res) => {
     let newComment : Comment = {
         postId : post._id,
         datePosted : new Date(),
-        authorId : new ObjectId("67e09f9a6bb442d479dc5d87")
-        // TODO: add authorId from authenticated user
+        authorId : new ObjectId(req.userId)
     }
 
     // Transfer properties from body to comment

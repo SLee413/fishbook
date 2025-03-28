@@ -11,6 +11,8 @@ import { Collection, Db, ObjectId } from 'mongodb';
 import { getDatabase } from '../clients/mongoclient';
 import { Post, postSchema, User, Comment, userSchema } from '../schemas/index';
 
+const jwt = require("jsonwebtoken");
+
 const express = require('express');
 const router = express.Router();
 
@@ -71,11 +73,16 @@ router.post('/create', async (req, res) => {
 
     // Add user to collection
     let userData : User = result.data;
-    usersCollection.insertOne(userData);
+    let sysUser = await usersCollection.insertOne(userData);
 
-    // TODO: generate session token
+    if (!sysUser.insertedId) return res.sendStatus(500); 
 
-    res.status(201).send("session token?");
+    // Generate token
+    let token = jwt.sign({
+        userId : sysUser.insertedId
+    }, process.env.JWT_SECRET);
+
+    res.status(201).send(token);
 });
   
 // Login
