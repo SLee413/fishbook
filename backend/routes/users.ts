@@ -31,9 +31,12 @@ router.get('/:userid', async (req, res) => {
 
     if (user == null) return res.status(404).send("Invalid user");
 
-    // Don't send everyone this user's password
+    // Don't send everyone this user's password or session token
     if (user.password) {
         delete user["password"];
+    }
+    if (user.sessionToken) {
+        delete user["sessionToken"];
     }
 
     res.send(user);
@@ -72,7 +75,33 @@ router.post('/create', async (req, res) => {
     let userData : User = result.data;
     usersCollection.insertOne(userData);
 
-    res.status(200).send("session token?");
+    // TODO: generate session token
+
+    res.status(201).send("session token?");
 });
   
+// Login
+async function login(req, res) {
+    const database : Db = await getDatabase();
+    const usersCollection : Collection<User> = await database.collection("Users");
+
+    // Ensure the request contains a name and password
+    if (!req.body.name || !req.body.password) return res.status(400).send("Invalid credentials");
+
+    // Right now we just query the database for a user with that name and password - not very safe but works
+    let user = await usersCollection.findOne({
+        name : req.body.name,
+        password : req.body.password
+    });
+
+    if (user == null) return res.status(400).send("Invalid credentials");
+
+    // Set the last login time
+    user.lastLoginAt = new Date();
+
+    // TODO: generate session token
+
+    res.send("session token here");
+}
+
 export const usersRouter = router;
