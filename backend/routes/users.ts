@@ -31,13 +31,11 @@ router.get('/:userid', async (req, res) => {
 
     if (user == null) return res.status(404).send("Invalid user");
 
-    // Don't send everyone this user's password or session token
+    // Don't send everyone this user's password
     if (user.password) {
         delete user["password"];
     }
-    if (user.sessionToken) {
-        delete user["sessionToken"];
-    }
+    
 
     res.send(user);
 });
