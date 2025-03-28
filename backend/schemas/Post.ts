@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ObjectId } from "mongodb";
 
 /**
  * @file Defines a post object
@@ -13,13 +14,17 @@ import { z } from "zod";
 
 // Create a Zod schema
 export const postSchema = z.object({
-	authorId : z.string(),
+	_id : z.instanceof(ObjectId).optional(),
+	authorId : z.instanceof(ObjectId),
 	datePosted : z.date(),
 
 	likes: z.number(),
-	imageUrl: z.string(),
+	imageUrl: z.string().regex(/.*/),	// TODO: add url regexing
 	dateCaught: z.date(),
-	location: z.string(),			// We need to change this once we figure out what will work best for google maps
+	location: z.object({
+		lat : z.number(),
+		lng : z.number()
+	}),
 	
 	species: z.string().optional(),
 	bait: z.string().optional(),

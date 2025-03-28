@@ -1,3 +1,6 @@
+import { ObjectId } from "mongodb";
+import { z } from "zod";
+
 /**
  * @file Defines a comment object
  * @decription
@@ -8,11 +11,13 @@
  * 
  */
 
-export interface Comment {
-	_id: string;
-	postId : string;
-	authorId : string;
-	datePosted: Date;
-	
-	comment: string;
-}
+export const commentSchema = z.object({
+	_id : z.instanceof(ObjectId).optional(),
+	postId : z.instanceof(ObjectId),
+	authorId : z.instanceof(ObjectId),
+	datePosted : z.date(),
+
+	comment : z.string()
+});
+
+export type Comment = z.infer<typeof commentSchema>;
