@@ -16,9 +16,11 @@ import { ObjectId } from "mongodb";
 export const postSchema = z.object({
 	_id : z.instanceof(ObjectId).optional(),
 	authorId : z.instanceof(ObjectId),
+	authorName : z.string(),
+	authorProfilePicture : z.string(),
 	datePosted : z.date(),
-
 	likes: z.number(),
+
 	imageUrl: z.string().regex(/.*/),	// TODO: add url regexing
 	dateCaught: z.date(),
 	location: z.object({
