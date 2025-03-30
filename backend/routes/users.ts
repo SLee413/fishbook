@@ -127,7 +127,9 @@ router.post('/create', async (req, res) => {
  * 	- name - 		String
  *  - password -	String
  * 
- * @return Session token for the user
+ * @return {
+ * 	token - Session token for the user
+ * }
  * NOTE: Invalid credentials will be met with a 400 status error 
  * with the message "Invalid credentials"
  */
@@ -154,7 +156,9 @@ router.post('/login', async (req, res) => {
 			userId : user._id
 		}, process.env.JWT_SECRET);
 
-		res.send(token);
+		res.send({
+			token: token
+		});
 
 	// Log errors and return 500
 	} catch (error) {

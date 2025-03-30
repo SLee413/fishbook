@@ -22,7 +22,9 @@ const auth = require('./authentication');
  * @query filterWaterType String - Filters posts by specific water type
  * @query postsAfter PostId - Will return posts after a specific postId
  * 
- * @return Array of post objects
+ * @return {
+ * 	posts - Array of posts
+ * }
  */
 router.get('/', async (req, res) => {
 	try {
@@ -35,7 +37,9 @@ router.get('/', async (req, res) => {
 			.limit(10) // Limit the result to 5 documents
 			.toArray(); // Convert the result to an array
 
-		res.send(posts);
+		res.send({
+			posts : posts
+		});
 	// Log errors and return 500
 	} catch (error) {
 		console.error(error);
@@ -58,12 +62,14 @@ router.get('/', async (req, res) => {
  * 	- bait -		String (optional)
  * 	- waterType -	String (optional)
  * 
- * @return PostID of the new post
+ * @return {
+ * 	postId - ID of the new post
+ * }
  */
 router.post('/', auth, async (req, res) => {
 	// Ensure user is authenticated
 	if (!req.user) return res.status(401).send("Unauthorized");
-	
+
 	try {
 		const database : Db = await getDatabase();
 		const postsCollection : Collection<Post> = await database.collection("Posts");
@@ -100,7 +106,9 @@ router.post('/', auth, async (req, res) => {
 		
 		let postInsertion = await postsCollection.insertOne(postData);
 
-		res.status(201).send(postInsertion.insertedId);
+		res.status(201).send({
+			postId : postInsertion.insertedId
+		});
 
 	// Log errors and return 500
 	} catch (error) {
@@ -116,7 +124,9 @@ router.post('/', auth, async (req, res) => {
  * 
  * @query commentsAfter - CommentId - Will return comments after a specific commentId
  * 
- * @return Array of comments
+ * @return {
+ * 	comments - Array of comments
+ * }
  */
 router.get('/:postid/comments', async (req, res) => {
 	try {
@@ -134,7 +144,9 @@ router.get('/:postid/comments', async (req, res) => {
 			.limit(10) // Limit the result to 5 documents
 			.toArray(); // Convert the result to an array
 
-		res.send(comments);
+		res.send({
+			comments: comments
+		});
 
 	// Log errors and return 500
 	} catch (error) {
