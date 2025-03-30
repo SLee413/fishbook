@@ -15,9 +15,13 @@ export const commentSchema = z.object({
 	_id : z.instanceof(ObjectId).optional(),
 	postId : z.instanceof(ObjectId),
 	authorId : z.instanceof(ObjectId),
+	authorName : z.string(),
+	authorProfilePicture : z.string(),
 	datePosted : z.date(),
+	
 
-	comment : z.string()
+	comment : z.string(),
+	
 });
 
 export type Comment = z.infer<typeof commentSchema>;

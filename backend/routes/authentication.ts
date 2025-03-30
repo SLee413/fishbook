@@ -13,6 +13,16 @@ import { User } from '../schemas/index';
 
 const jwt = require("jsonwebtoken");
 
+/**
+ * Ensures that the user is authenticated
+ * 
+ * To pass this function, you must include an Authorization header
+ * with a VALID token, given to you by logging in or signing up
+ * Invalid tokens will receive a 401 Unauthorized error
+ * 
+ * This function then adds the user to the request, available via
+ * request.user
+ */
 module.exports = async (request, response, next) => {
   try {
 	// Get the authorization token from the headers
@@ -34,7 +44,7 @@ module.exports = async (request, response, next) => {
 	if (userDoc == null) return response.status(401).json({error: new Error("Invalid request!")});
 
 	// pass the user down to the endpoints here
-	request.userId = userId;
+	request.user = userDoc;
 
 	// pass down functionality to the endpoint
 	next();
