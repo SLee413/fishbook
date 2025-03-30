@@ -10,8 +10,13 @@
 import { Collection, Db, ObjectId } from 'mongodb';
 import { getDatabase } from '../clients/mongoclient';
 import { User } from '../schemas/index';
+import { Request, Response, NextFunction } from 'express';
 
 const jwt = require("jsonwebtoken");
+
+export interface AuthRequest extends Request {
+	user? : User
+}
 
 /**
  * Adds an authenticated user to the request
@@ -21,7 +26,7 @@ const jwt = require("jsonwebtoken");
  * available via request.user. If the token is not valid, 
  * then request.user will be null.
  */
-module.exports = async (request, response, next) => {
+module.exports = async (request : AuthRequest, response : Response, next : NextFunction) => {
   try {
 	// Get the authorization token from the headers
 	const token = await request.headers.authorization.split(" ")[1];
@@ -49,7 +54,7 @@ module.exports = async (request, response, next) => {
 
   } catch (error) {
 	// Ensure that there is no user field in the request
-	response.user = null;
+	request.user = null;
 	next();
   }
 };

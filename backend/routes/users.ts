@@ -10,11 +10,13 @@
 import { Collection, Db, ObjectId } from 'mongodb';
 import { getDatabase } from '../clients/mongoclient';
 import { Post, postSchema, User, Comment, userSchema } from '../schemas/index';
+import { Request, Response, Router } from 'express';
+import { AuthRequest } from './authentication';
+
 
 const jwt = require("jsonwebtoken");
 
-const express = require('express');
-const router = express.Router();
+const router = Router();
 
 /** 
  * Gets user data
@@ -22,20 +24,26 @@ const router = express.Router();
  * @param userid The ID of the user
  * @return The User object for the particular user (minus password)
  */
-router.get('/:userid', async (req, res) => {
+router.get('/:userid', async (req : AuthRequest, res : Response) => {
 	try {
 		const database : Db = await getDatabase();
 		const usersCollection : Collection<User> = await database.collection("Users");
 
 		// Ensure userid is valid
-		if (!ObjectId.isValid(req.params.userid)) return res.status(404).send("Invalid user");
+		if (!ObjectId.isValid(req.params.userid)) {
+			res.status(404).send("Invalid user");
+			return;
+		}
 
 		// Find the user
 		let user = await usersCollection.findOne({
 			_id : new ObjectId(req.params.userid)
 		});
 
-		if (user == null) return res.status(404).send("Invalid user");
+		if (user == null) {
+			res.status(404).send("Invalid user");
+			return
+		}
 
 		// Don't send everyone this user's password
 		if (user.password) {
@@ -69,7 +77,7 @@ router.get('/:userid', async (req, res) => {
  * 
  * NOTE: If a username is taken, it will be a 400 status with the message "Username taken"
  */
-router.post('/create', async (req, res) => {
+router.post('/create', async (req : AuthRequest, res : Response) => {
 	try {
 		const database : Db = await getDatabase();
 		const usersCollection : Collection<User> = await database.collection("Users");
@@ -89,19 +97,28 @@ router.post('/create', async (req, res) => {
 		let result = userSchema.safeParse(newUser);
 
 		// Validate user
-		if (!result.success) return res.status(400).send('Invalid user');
+		if (!result.success) {
+			res.status(400).send('Invalid user');
+			return;
+		}
 
 		// Ensure username isn't taken
 		let otherUser = await usersCollection.findOne({
 			name : newUser.name
 		});
-		if (otherUser) return res.status(400).send('Username taken');
+		if (otherUser) {
+			res.status(400).send('Username taken');
+			return;
+		}
 
 		// Add user to collection
 		let userData : User = result.data;
 		let sysUser = await usersCollection.insertOne(userData);
 
-		if (!sysUser.insertedId) return res.sendStatus(500); 
+		if (!sysUser.insertedId) {
+			res.sendStatus(500); 
+			return;
+		}
 
 		// Generate token
 		let token = jwt.sign({
@@ -133,20 +150,26 @@ router.post('/create', async (req, res) => {
  * NOTE: Invalid credentials will be met with a 400 status error 
  * with the message "Invalid credentials"
  */
-router.post('/login', async (req, res) => {
+router.post('/login', async (req : AuthRequest, res : Response) => {
 	try {
 		const database : Db = await getDatabase();
 		const usersCollection : Collection<User> = await database.collection("Users");
 
 		// Ensure the request contains a name and password
-		if (!req.body.name || !req.body.password) return res.status(400).send("Invalid credentials");
+		if (!req.body.name || !req.body.password) {
+			res.status(400).send("Invalid credentials");
+			return;
+		}
 
 		// Right now we just query the database for a user with that name and password - not very safe but works
 		let user = await usersCollection.findOne({
 			name : req.body.name,
 			password : req.body.password
 		});
-		if (user == null) return res.status(400).send("Invalid credentials");
+		if (user == null) {
+			res.status(400).send("Invalid credentials");
+			return
+		}
 
 		// Set the last login time
 		user.lastLoginAt = new Date();

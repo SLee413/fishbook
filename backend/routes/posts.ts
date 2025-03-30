@@ -7,12 +7,13 @@
  * 
  */
 
-import { Collection, Db, ObjectId } from 'mongodb';
+import { Auth, Collection, Db, ObjectId } from 'mongodb';
 import { getDatabase } from '../clients/mongoclient';
 import { Post, postSchema, User, Comment, commentSchema } from '../schemas/index';
+import { Request, Response, Router } from 'express';
+import { AuthRequest } from './authentication';
 
-const express = require('express');
-const router = express.Router();
+const router = Router();
 const auth = require('./authentication');
 
 /**
@@ -26,11 +27,14 @@ const auth = require('./authentication');
  * 	posts - Array of posts
  * }
  */
-router.get('/', async (req, res) => {
+router.get('/', auth, async (req : AuthRequest, res : Response) => {
 	try {
 		// TODO: add options for filters + pagination
 		const database : Db = await getDatabase();
 		const postsCollection : Collection<Post> = await database.collection("Posts");
+
+		// Filter by water type
+		let waterType = req.params
 
 		let posts = await postsCollection.find()
 			.sort({ createdAt: -1 }) // Sort in descending order by createdAt
@@ -66,9 +70,12 @@ router.get('/', async (req, res) => {
  * 	postId - ID of the new post
  * }
  */
-router.post('/', auth, async (req, res) => {
+router.post('/', auth, async (req : AuthRequest, res : Response) => {
 	// Ensure user is authenticated
-	if (!req.user) return res.status(401).send("Unauthorized");
+	if (!req.user) {
+		res.status(401).send("Unauthorized");
+		return;
+	}
 
 	try {
 		const database : Db = await getDatabase();
@@ -100,7 +107,10 @@ router.post('/', auth, async (req, res) => {
 		let result = postSchema.safeParse(newPost);
 
 		// Validate post
-		if (!result.success) return res.status(400).send('Invalid post structure');
+		if (!result.success) {
+			res.status(400).send('Invalid post structure');
+			return;
+		}
 
 		let postData : Post = result.data;
 		
@@ -128,14 +138,17 @@ router.post('/', auth, async (req, res) => {
  * 	comments - Array of comments
  * }
  */
-router.get('/:postid/comments', async (req, res) => {
+router.get('/:postid/comments', async (req : Request, res : Response) => {
 	try {
 		// TODO: pagination
 		const database : Db = await getDatabase();
 		const commentsCollection : Collection<Comment> = await database.collection("Comments");
 
 		// Ensure postid is valid
-		if (!ObjectId.isValid(req.params.postid)) return res.status(404).send("Invalid post");
+		if (!ObjectId.isValid(req.params.postid)) {
+			res.status(404).send("Invalid post");
+			return;
+		}
 
 		let comments = await commentsCollection.find({
 			postId : new ObjectId(req.params.postid)
@@ -165,9 +178,12 @@ router.get('/:postid/comments', async (req, res) => {
  * 
  * @return The CommentId of the new comment
  */
-router.post('/:postid/comments', auth, async (req, res) => {
+router.post('/:postid/comments', auth, async (req : AuthRequest, res : Response) => {
 	// Ensure user is authenticated
-	if (!req.user) return res.status(401).send("Unauthorized");
+	if (!req.user) {
+		res.status(401).send("Unauthorized");
+		return;
+	}
 
 	try {
 		const database : Db = await getDatabase();
@@ -175,13 +191,19 @@ router.post('/:postid/comments', auth, async (req, res) => {
 		const commentsCollection : Collection<Comment> = await database.collection("Comments");
 	
 		// Ensure postid is valid
-		if (!ObjectId.isValid(req.params.postid)) return res.status(404).send("Invalid post");
+		if (!ObjectId.isValid(req.params.postid)) {
+			res.status(404).send("Invalid post");
+			return;
+		}
 	
 		// Ensure post exists
 		let post = await postsCollection.findOne({
 			_id : new ObjectId(req.params.postid)
 		});
-		if (post == null) return res.status(404).send("Invalid post");
+		if (post == null) {
+			res.status(404).send("Invalid post");
+			return;
+		}
 	
 		// Create a new comment object
 		let newComment : Comment = {
@@ -201,7 +223,10 @@ router.post('/:postid/comments', auth, async (req, res) => {
 		let result = commentSchema.safeParse(newComment);
 	
 		// Validate user
-		if (!result.success) return res.status(400).send('Invalid comment');
+		if (!result.success) {
+			res.status(400).send('Invalid comment');
+			return;
+		}
 	
 		let commentData : Comment = result.data;
 			
