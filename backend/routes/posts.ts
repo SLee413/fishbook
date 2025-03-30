@@ -61,6 +61,9 @@ router.get('/', async (req, res) => {
  * @return PostID of the new post
  */
 router.post('/', auth, async (req, res) => {
+	// Ensure user is authenticated
+	if (!req.user) return res.status(401).send("Unauthorized");
+	
 	try {
 		const database : Db = await getDatabase();
 		const postsCollection : Collection<Post> = await database.collection("Posts");
@@ -117,7 +120,6 @@ router.post('/', auth, async (req, res) => {
  */
 router.get('/:postid/comments', async (req, res) => {
 	try {
-		
 		// TODO: pagination
 		const database : Db = await getDatabase();
 		const commentsCollection : Collection<Comment> = await database.collection("Comments");
@@ -152,6 +154,9 @@ router.get('/:postid/comments', async (req, res) => {
  * @return The CommentId of the new comment
  */
 router.post('/:postid/comments', auth, async (req, res) => {
+	// Ensure user is authenticated
+	if (!req.user) return res.status(401).send("Unauthorized");
+
 	try {
 		const database : Db = await getDatabase();
 		const postsCollection : Collection<Post> = await database.collection("Posts");

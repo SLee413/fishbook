@@ -14,14 +14,12 @@ import { User } from '../schemas/index';
 const jwt = require("jsonwebtoken");
 
 /**
- * Ensures that the user is authenticated
+ * Adds an authenticated user to the request
  * 
- * To pass this function, you must include an Authorization header
- * with a VALID token, given to you by logging in or signing up
- * Invalid tokens will receive a 401 Unauthorized error
- * 
- * This function then adds the user to the request, available via
- * request.user
+ * In order to qualify as authenticated, a valid token must
+ * be passed via the Authorization header. The user will be
+ * available via request.user. If the token is not valid, 
+ * then request.user will be null.
  */
 module.exports = async (request, response, next) => {
   try {
@@ -41,7 +39,7 @@ module.exports = async (request, response, next) => {
 	let userDoc = await usersCollection.findOne({
 		_id : new ObjectId(userId)
 	});
-	if (userDoc == null) return response.status(401).json({error: new Error("Invalid request!")});
+	if (userDoc == null) next();
 
 	// pass the user down to the endpoints here
 	request.user = userDoc;
@@ -50,8 +48,8 @@ module.exports = async (request, response, next) => {
 	next();
 
   } catch (error) {
-	response.status(401).json({
-	  error: new Error("Invalid request!"),
-	});
+	// Ensure that there is no user field in the request
+	response.user = null;
+	next();
   }
 };
