@@ -9,10 +9,18 @@
 
 import { Collection, Db, ObjectId } from 'mongodb';
 import { getDatabase } from '../clients/mongoclient';
-import { Post, postSchema, User, Comment, commentSchema } from '../schemas/index';
+import { User } from '../schemas/index';
 
 const jwt = require("jsonwebtoken");
 
+/**
+ * Adds an authenticated user to the request
+ * 
+ * In order to qualify as authenticated, a valid token must
+ * be passed via the Authorization header. The user will be
+ * available via request.user. If the token is not valid, 
+ * then request.user will be null.
+ */
 module.exports = async (request, response, next) => {
   try {
 	// Get the authorization token from the headers
@@ -29,19 +37,19 @@ module.exports = async (request, response, next) => {
 	const usersCollection : Collection<User> = await database.collection("Users");
 
 	let userDoc = await usersCollection.findOne({
-		_id : userId
+		_id : new ObjectId(userId)
 	});
-	if (userDoc == null) return response.status(401).json({error: new Error("Invalid request!")});
+	if (userDoc == null) next();
 
 	// pass the user down to the endpoints here
-	request.userId = userId;
+	request.user = userDoc;
 
 	// pass down functionality to the endpoint
 	next();
 
   } catch (error) {
-	response.status(401).json({
-	  error: new Error("Invalid request!"),
-	});
+	// Ensure that there is no user field in the request
+	response.user = null;
+	next();
   }
 };
