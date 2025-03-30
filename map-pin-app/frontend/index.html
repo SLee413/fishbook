@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Map Pin App</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: sans-serif;
+    }
+
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    #controls {
+      padding: 10px;
+      background: #f5f5f5;
+      border-bottom: 1px solid #ddd;
+    }
+
+    #mapContainer {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    #map {
+      flex: 3;
+      height: 100%;
+    }
+
+    #sidebar {
+      flex: 1;
+      padding: 10px;
+      overflow-y: auto;
+      background: #f0f0f0;
+      border-left: 1px solid #ccc;
+    }
+
+    input {
+      margin-bottom: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div id="controls">
+      <input id="locationInput" placeholder="Enter address or lat,lng" size="40">
+      <input id="pinDateTime" type="datetime-local" />
+      <button onclick="addLocationFromInput()">Add Pin</button>
+
+      <div style="margin-top: 10px;">
+        <strong>📍 Your Location:</strong>
+        <span id="currentLocationWeather">Loading...</span><br>
+
+        <strong>🖱️ Clicked Location:</strong>
+        <span id="clickWeather">Click on the map...</span>
+      </div>
+
+      <div style="margin-top: 20px;">
+        <input id="weatherSearchInput" placeholder="Enter address or lat,lng" size="40">
+        <button onclick="searchLiveWeather()">Check Weather</button>
+        <div id="weatherSearchResult" style="margin-top: 5px; font-weight: bold;"></div>
+      </div>
+    </div>
+
+    <div id="mapContainer">
+      <div id="map"></div>
+      <div id="sidebar">
+        <strong>📅 Hourly Weather Forecast:</strong>
+        <div id="hourlyWeatherPanel">Click on the map or add a pin to see hourly forecast.</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
