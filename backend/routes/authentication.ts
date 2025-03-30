@@ -9,7 +9,7 @@
 
 import { Collection, Db, ObjectId } from 'mongodb';
 import { getDatabase } from '../clients/mongoclient';
-import { Post, postSchema, User, Comment, commentSchema } from '../schemas/index';
+import { User } from '../schemas/index';
 
 const jwt = require("jsonwebtoken");
 
@@ -31,8 +31,6 @@ module.exports = async (request, response, next) => {
 	let userDoc = await usersCollection.findOne({
 		_id : new ObjectId(userId)
 	});
-	console.log(userId)
-
 	if (userDoc == null) return response.status(401).json({error: new Error("Invalid request!")});
 
 	// pass the user down to the endpoints here
