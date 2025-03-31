@@ -24,9 +24,10 @@ fetch('http://localhost:3000/api/locations')
       const popupContent = `
         ${loc.name}<br>
         ${loc.datetime || ''}<br>
-        ${loc.weather?.temperature ?? ''}°C,
-        ${loc.weather?.precipitation ?? ''} mm rain
+        ${loc.weather?.temperature ?? 'N/A'}°F,
+        ${loc.weather?.precipitation ?? 'N/A'}" rain
       `;
+
       L.marker([loc.lat, loc.lng]).addTo(map).bindPopup(popupContent);
     });
   });
@@ -35,8 +36,6 @@ fetch('http://localhost:3000/api/locations')
 // Add new pin on click
 map.on('click', async function(e) {
   const { lat, lng } = e.latlng;
-  const clickWeather = await getLiveWeather(lat, lng);
-  updateWeatherSection("clickWeather", clickWeather);
 
   const name = prompt('Enter location name:');
   if (!name) return;
@@ -54,13 +53,22 @@ map.on('click', async function(e) {
   const sidebarHTML = `<strong>${name}</strong><br>${datetimeInput}<br><br>` + formatHourlyWeather(weatherData);
   document.getElementById("hourlyWeatherPanel").innerHTML = sidebarHTML;
 
-  L.marker([lat, lng]).addTo(map).bindPopup(name);
+  const temp = weatherData.temps[hour];
+  const icon = getWeatherIcon(weatherData.codes[hour]);
 
+  L.marker([lat, lng]).addTo(map)
+    .bindPopup(`${name}<br>${temp}°F ${icon}`)
+    .openPopup();
 
+  const weather = {
+    temperature: temp,
+    precipitation: weatherData.precipitation[hour],
+    weathercode: weatherData.codes[hour]
+  };
 
-  saveLocation(name, lat, lng, datetimeInput, weatherData);
-
+  saveLocation(name, lat, lng, datetimeInput, weather);
 });
+
 
 map.on('contextmenu', async function (e) {
   const { lat, lng } = e.latlng;
@@ -161,8 +169,6 @@ function formatHourlyWeather(data) {
 
 
 
-
-
 async function addLocationFromInput() {
   const input = document.getElementById('locationInput').value.trim();
   const datetimeInput = document.getElementById("pinDateTime").value;
@@ -178,11 +184,11 @@ async function addLocationFromInput() {
 
   let lat, lng;
 
-  // Check if input is coordinates
+  // 🔍 If coordinates
   if (/^-?\d+(\.\d+)?\s*,\s*-?\d+(\.\d+)?$/.test(input)) {
     [lat, lng] = input.split(',').map(Number);
   } else {
-    // Geocode the address
+    // 🌐 Geocode the address
     const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(input)}&format=json`);
     const data = await response.json();
     if (data.length === 0) return alert("Address not found.");
@@ -190,23 +196,33 @@ async function addLocationFromInput() {
     lng = parseFloat(data[0].lon);
 
     const searchWeather = await getLiveWeather(lat, lng);
-    updateWeatherSection("searchWeather", searchWeather);
-
+    //updateWeatherSection("searchWeather", searchWeather);
   }
 
+  // ✅ This happens regardless of input type:
   const name = prompt("Enter a name for this pin:");
   if (!name) return;
 
   const weatherData = await getWeather(lat, lng, date);
-  const sidebarHTML = `<strong>${name}</strong><br>${datetimeInput}<br><br>` + formatHourlyWeather(weatherData);
-  document.getElementById("hourlyWeatherPanel").innerHTML = sidebarHTML;
-  
-  L.marker([lat, lng]).addTo(map).bindPopup(name);
-  
+const sidebarHTML = `<strong>${name}</strong><br>${datetimeInput}<br><br>` + formatHourlyWeather(weatherData);
+document.getElementById("hourlyWeatherPanel").innerHTML = sidebarHTML;
 
+const selectedHour = parseInt(time.split(":")[0]);
+const weather = {
+  temperature: weatherData.temps[selectedHour],
+  precipitation: weatherData.precipitation[selectedHour],
+  weathercode: weatherData.codes[selectedHour]
+};
 
-  saveLocation(name, lat, lng, datetimeInput, weather);
+console.log("before L.");
+L.marker([lat, lng]).addTo(map)
+  .bindPopup(`${name}<br>${weather.temperature}°F ${getWeatherIcon(weather.weathercode)}`)
+  .openPopup();
+  console.log("before saveloaction.");
+saveLocation(name, lat, lng, datetimeInput, weather);
+
 }
+
 
 function updateWeatherSection(elementId, weather) {
   const icon = getWeatherIcon(weather.weathercode);
