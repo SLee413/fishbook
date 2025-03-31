@@ -19,9 +19,8 @@ const auth = require('./authentication');
 /**
  * Gets a list of posts
  * 
- * TODO: Implement these query parameters
  * @query filterWaterType String - Filters posts by specific water type
- * @query postsAfter PostId - Will return posts after a specific postId
+ * @query lastPost PostId - Will return the next posts after a given postId
  * 
  * @return {
  * 	posts - Array of posts
@@ -29,14 +28,24 @@ const auth = require('./authentication');
  */
 router.get('/', auth, async (req : AuthRequest, res : Response) => {
 	try {
-		// TODO: add options for filters + pagination
 		const database : Db = await getDatabase();
 		const postsCollection : Collection<Post> = await database.collection("Posts");
 
-		// Filter by water type
-		let waterType = req.params
+		let filters = {}
 
-		let posts = await postsCollection.find()
+		// Filter by water type
+		let waterType = req.query["waterType"];
+		if (waterType) {
+			filters["waterType"] = waterType
+		}
+
+		// Only query posts made before the given post
+		let lastPost = req.query["lastPost"];
+		if (typeof lastPost === 'string' && ObjectId.isValid(lastPost)) {
+			filters["_id"] = {$lt : new ObjectId(lastPost)}
+		}
+
+		let posts = await postsCollection.find(filters)
 			.sort({ createdAt: -1 }) // Sort in descending order by createdAt
 			.limit(10) // Limit the result to 5 documents
 			.toArray(); // Convert the result to an array
