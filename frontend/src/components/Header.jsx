@@ -22,14 +22,9 @@ const Header = ({ isLoggedIn }) => {
               <Link to="/account" className={styles.navLink}>Account</Link>
             </li>
           ) : (
-            <>
-              <li className={styles.navItem}>
-                <Link to="/login" className={styles.navLink}>Login</Link>
-              </li>
-              <li className={styles.navItem}>
-                <Link to="/create-account" className={styles.navLink}>Create Account</Link>
-              </li>
-            </>
+            <li className={styles.navItem}>
+              <Link to="/login" className={styles.navLink}>Login / Create Account</Link>
+            </li>
           )}
         </ul>
       </nav>

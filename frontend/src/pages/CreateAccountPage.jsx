@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import '../css/CreateAccountPage.module.css';
+import styles from '../css/CreateAccountPage.module.css';
 
 const CreateAccountPage = ({ onLogin }) => {
   const [firstName, setFirstName] = useState('');
@@ -42,45 +42,36 @@ const CreateAccountPage = ({ onLogin }) => {
   };
 
   return (
-    <main className="create-account-container">
-      <h2>Create Account</h2>
-      <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          placeholder="First Name"
-          value={firstName}
-          onChange={(e) => setFirstName(e.target.value)}
-        />
-        <input
-          type="text"
-          placeholder="Last Name"
-          value={lastName}
-          onChange={(e) => setLastName(e.target.value)}
-        />
-        <input
-          type="text"
-          placeholder="Username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-        />
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-        <button type="submit">Create Account</button>
-        {error && <p className="error">{error}</p>}
-        <button type="button" onClick={() => navigate('/login')}>
+    <main className={styles["create-account-page"]}>
+      <div className={styles["create-account-container"]}>
+        <h1 className={styles["create-account-title"]}>Create Account</h1>
+        <form className={styles["create-account-form"]} onSubmit={handleSubmit}>
+          <label className={styles["create-account-label"]}>First Name</label>
+          <input className={styles["create-account-input"]} value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+
+          <label className={styles["create-account-label"]}>Last Name</label>
+          <input className={styles["create-account-input"]} value={lastName} onChange={(e) => setLastName(e.target.value)} />
+
+          <label className={styles["create-account-label"]}>Username</label>
+          <input className={styles["create-account-input"]} value={username} onChange={(e) => setUsername(e.target.value)} />
+
+          <label className={styles["create-account-label"]}>Email</label>
+          <input className={styles["create-account-input"]} type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+
+          <label className={styles["create-account-label"]}>Password</label>
+          <input className={styles["create-account-input"]} type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+
+          {error && <p style={{ color: 'red' }}>{error}</p>}
+
+          <button className={styles["create-account-button"]} type="submit">Create Account</button>
+        </form>
+
+        <div className={styles["or-divider"]}>or</div>
+
+        <div className={styles["already-have-account"]} onClick={() => navigate('/login')}>
           Already have an account? Log in
-        </button>
-      </form>
+        </div>
+      </div>
     </main>
   );
 };
