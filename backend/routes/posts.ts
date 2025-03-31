@@ -86,7 +86,7 @@ router.post('/', auth, async (req : AuthRequest, res : Response) => {
 		// basic info for new posts
 		let newPost : Post = {
 			authorId : user._id,
-			authorName : user.name,
+			authorName : user.username,
 			authorProfilePicture : user.profilePictureUrl,
 			datePosted : new Date(),
 			likes : 0
@@ -210,7 +210,7 @@ router.post('/:postid/comments', auth, async (req : AuthRequest, res : Response)
 			postId : post._id,
 			datePosted : new Date(),
 			authorId : req.user._id,
-			authorName : req.user.name,
+			authorName : req.user.username,
 			authorProfilePicture : req.user.profilePictureUrl
 		}
 	
