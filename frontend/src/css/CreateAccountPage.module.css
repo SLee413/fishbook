@@ -1,0 +1,35 @@
+.create-account-container {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    max-width: 300px;
+    margin: 0 auto;
+  }
+  
+  .create-account-container h2 {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  
+  .create-account-container form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .create-account-container input,
+  .create-account-container button {
+    padding: 10px;
+    font-size: 16px;
+  }
+  
+  .create-account-container button {
+    cursor: pointer;
+  }
+  
+  .create-account-container .error {
+    color: red;
+    font-size: 14px;
+    text-align: center;
+  }
+  

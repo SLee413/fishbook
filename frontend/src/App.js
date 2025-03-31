@@ -5,21 +5,16 @@ import AccountPage from './pages/AccountPage';
 import MapPage from './pages/MapPage';
 import CreatePost from './pages/CreatePost';
 import LoginPage from './pages/LoginPage';
+import CreateAccountPage from './pages/CreateAccountPage';
 import Header from './components/Header';
 
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
 
-  const handleLogin = (username) => {
-    const mockUser = {
-      username: username,
-      email: `${username.toLowerCase()}@fishbook.com`,
-      memberSince: 'March 2024',
-    };
-
+  const handleLogin = (userData) => {
     setIsLoggedIn(true);
-    setUser(mockUser);
+    setUser(userData);
   };
 
   const handleLogout = () => {
@@ -30,16 +25,18 @@ const App = () => {
   return (
     <Router>
       <Header isLoggedIn={isLoggedIn} />
-
       <Routes>
         <Route path="/" element={<FeedPage />} />
         <Route path="/map" element={<MapPage />} />
-        <Route path="/create-post" element={isLoggedIn ? <CreatePost /> : <Navigate to="/login" />} />
+        <Route path="/create-post" element={<CreatePost />} />
+        <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
+        <Route path="/create-account" element={<CreateAccountPage onLogin={handleLogin} />} />
         <Route
           path="/account"
-          element={isLoggedIn ? <AccountPage user={user} handleLogout={handleLogout} /> : <Navigate to="/login" />}
+          element={
+            isLoggedIn ? <AccountPage user={user} /> : <Navigate to="/login" />
+          }
         />
-        <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
       </Routes>
     </Router>
   );

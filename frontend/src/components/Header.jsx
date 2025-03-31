@@ -5,7 +5,6 @@ import styles from './Header.module.css';
 const Header = ({ isLoggedIn }) => {
   return (
     <header className={styles.header}>
-      {/* Wrap logo in a Link and style it */}
       <Link to="/" className={styles.logoContainer}>
         <h1 className={styles.logoText}>Fishbook</h1>
       </Link>
@@ -18,13 +17,20 @@ const Header = ({ isLoggedIn }) => {
           <li className={styles.navItem}>
             <Link to="/create-post" className={styles.navLink}>Create Post</Link>
           </li>
-          <li className={styles.navItem}>
-            {isLoggedIn ? (
+          {isLoggedIn ? (
+            <li className={styles.navItem}>
               <Link to="/account" className={styles.navLink}>Account</Link>
-            ) : (
-              <Link to="/login" className={styles.navLink}>Login</Link>
-            )}
-          </li>
+            </li>
+          ) : (
+            <>
+              <li className={styles.navItem}>
+                <Link to="/login" className={styles.navLink}>Login</Link>
+              </li>
+              <li className={styles.navItem}>
+                <Link to="/create-account" className={styles.navLink}>Create Account</Link>
+              </li>
+            </>
+          )}
         </ul>
       </nav>
     </header>
