@@ -22,7 +22,7 @@ const Header = ({ isLoggedIn }) => {
             {isLoggedIn ? (
               <Link to="/account/edit" className={styles.navLink}>Account</Link>
             ) : (
-              <Link to="/login" className={styles.navLink}>Login</Link>
+              <Link to="/login" className={styles.navLink}>Login / Create Account</Link>
             )}
           </li>
         </ul>
