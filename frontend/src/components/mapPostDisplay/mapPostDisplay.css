@@ -1,0 +1,180 @@
+/* frontend/src/components/MapPostsDisplay/MapPostsDisplay.css */
+
+.map-posts-display {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+    margin: 15px 0;
+    max-height: 500px;
+    overflow-y: auto;
+  }
+  
+  .map-posts-display h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #333;
+    font-size: 18px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+  }
+  
+  .no-posts-message {
+    color: #666;
+    font-style: italic;
+    text-align: center;
+    padding: 20px 0;
+  }
+  
+  .map-posts-loading, 
+  .map-posts-error {
+    padding: 20px;
+    text-align: center;
+  }
+  
+  .map-posts-error {
+    color: #e74c3c;
+  }
+  
+  .posts-list {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  
+  .post-card {
+    border: 1px solid #eee;
+    border-radius: 6px;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  
+  .post-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .post-header {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .post-species {
+    font-weight: 600;
+    color: #333;
+  }
+  
+  .post-date {
+    color: #777;
+    font-size: 0.9em;
+  }
+  
+  .post-image {
+    width: 100%;
+    height: 150px;
+    overflow: hidden;
+  }
+  
+  .post-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+  
+  .post-card:hover .post-image img {
+    transform: scale(1.05);
+  }
+  
+  .post-info {
+    padding: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .post-water-type,
+  .post-bait {
+    background-color: #f0f8ff;
+    color: #3498db;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.85em;
+  }
+  
+  .post-bait {
+    background-color: #f0fff0;
+    color: #27ae60;
+  }
+  
+  .post-actions {
+    display: flex;
+    border-top: 1px solid #eee;
+  }
+  
+  .view-on-map-btn,
+  .view-post-btn {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    background-color: #f8f8f8;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    color: #333;
+    font-weight: 500;
+    transition: background-color 0.2s;
+  }
+  
+  .view-on-map-btn {
+    border-right: 1px solid #eee;
+  }
+  
+  .view-on-map-btn:hover {
+    background-color: #e8f4fc;
+  }
+  
+  .view-post-btn:hover {
+    background-color: #e8fcef;
+  }
+  
+  /* Responsive adjustments */
+  @media (min-width: 768px) {
+    .posts-list {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  
+  @media (min-width: 1200px) {
+    .posts-list {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  
+  .view-on-map-btn {
+    border-right: 1px solid #eee;
+  }
+  
+  .view-on-map-btn:hover {
+    background-color: #e8f4fc;
+  }
+  
+  .view-post-btn:hover {
+    background-color: #e8fcef;
+  }
+  
+  /* Responsive adjustments */
+  @media (min-width: 768px) {
+    .posts-list {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  
+  @media (min-width: 1200px) {
+    .posts-list {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }

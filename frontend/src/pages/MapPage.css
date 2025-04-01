@@ -1,0 +1,25 @@
+.map-page {
+  height: calc(100vh - 64px);
+  width: 100%;
+  display: flex;
+}
+
+.map-container {
+  flex: 1;
+  position: relative;
+}
+
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+}
+
+.marker-popup {
+  text-align: center;
+}
+
+.marker-popup strong {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 16px;
+}
