@@ -17,15 +17,13 @@ const Header = ({ isLoggedIn }) => {
           <li className={styles.navItem}>
             <Link to="/create-post" className={styles.navLink}>Create Post</Link>
           </li>
-          {isLoggedIn ? (
-            <li className={styles.navItem}>
+          <li className={styles.navItem}>
+            {isLoggedIn ? (
               <Link to="/account" className={styles.navLink}>Account</Link>
-            </li>
-          ) : (
-            <li className={styles.navItem}>
-              <Link to="/login" className={styles.navLink}>Login / Create Account</Link>
-            </li>
-          )}
+            ) : (
+              <Link to="/login" className={styles.navLink}>Login</Link>
+            )}
+          </li>
         </ul>
       </nav>
     </header>

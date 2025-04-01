@@ -1,15 +1,17 @@
 const mongoose = require('mongoose');
 
 const LocationSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  lat: { type: Number, required: true },
-  lng: { type: Number, required: true },
-  datetime: { type: String, default: null },
+  name: String,
+  lat: Number,
+  lng: Number,
+  datetime: String,
   weather: {
-    temperature: { type: Number, default: null },
-    precipitation: { type: Number, default: null },
-    weathercode: { type: Number, default: null }
+    temperature: Number,
+    precipitation: Number,
+    windspeed: Number,  
+    weathercode: Number   
   }
 });
+
 
 module.exports = mongoose.model('Location', LocationSchema);
