@@ -1,0 +1,223 @@
+.create-account-page {
+    font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
+    color: #1e3a8a;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #fff;
+    min-height: 100vh;
+    padding: 20px;
+  }
+  
+  .create-account-container {
+    max-width: 550px;
+    width: 100%;
+    padding: 20px;
+    text-align: center;
+  }
+  
+  .create-account-title {
+    font-size: 2rem;
+    color: #1e3a8a;
+    margin-bottom: 20px;
+  }
+  
+  .create-account-form {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+  }
+  
+  .create-account-label {
+    font-size: 1rem;
+    font-weight: bolder;
+    margin-bottom: 5px;
+    color: #1e3a8a;
+  }
+  
+  .create-account-input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1rem;
+    box-sizing: border-box;
+    height: 40px;
+    outline: none;
+    color: #000000;  /* typed text = black */
+  }
+  
+  .create-account-input:focus {
+    border-color: #1e3a8a;
+  }
+  
+  .password-requirements {
+    font-size: 0.9rem;
+    color: #1e3a8a;
+    margin-top: -10px;
+    margin-bottom: 0px;
+    padding-left: 20px;
+    list-style-position: outside;
+    text-align: left;
+  }
+  
+  .password-requirements li {
+    margin-bottom: 5px;
+    padding-left: 0;
+  }
+  
+  .create-account-options {
+    display: flex;
+    align-items: center;
+  }
+  
+  .contractor-account {
+    font-size: 1rem;
+    font-weight: bolder;
+    margin-left: 5px;
+    color: #1e3a8a;
+  }
+  
+  .create-account-button {
+    background-color: #1e3a8a;
+    color: #ffffff;
+    padding: 10px 0;
+    width: 100%;
+    border: none;
+    border-radius: 5px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    margin-top: 20px;
+  }
+  
+  .create-account-button:hover {
+    background-color: #1e3a8a;
+    color: #ffffff;
+  }
+  
+  .or-divider {
+    width: 100%;
+    margin: 10px 0;
+    font-size: 1rem;
+    color: #1e3a8a;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 20px;
+  }
+  
+  .or-divider::before,
+  .or-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background-color: #ccc;
+  }
+  
+  .already-have-account {
+    color: #1e3a8a;
+    text-decoration: underline;
+    font-weight: bolder;
+    cursor: pointer;
+  }
+  
+  .contractor-fields {
+    margin-top: 20px;
+    padding: 20px 0;
+    border-top: 1px solid #ccc;
+    width: 100%;
+    text-align: left;
+    color: #1e3a8a;
+  }
+  
+  .contractor-fields textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1rem;
+    resize: none;
+    margin-bottom: 15px;
+    box-sizing: border-box;
+    height: 150px;
+    color: #1e3a8a;
+  }
+  
+  .services-grid {
+    margin-top: 20px;
+    width: 100%;
+    text-align: left;
+    padding-bottom: 20px;
+  }
+  
+  .services-grid-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 20px;
+  }
+  
+  .service-item {
+    display: flex;
+    align-items: center;
+    color: #1e3a8a;
+  }
+  
+  .service-item label {
+    margin-left: 5px;
+    font-size: 0.9rem;
+    color: #1e3a8a;
+  }
+  
+  .address-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    width: 100%;
+    margin-bottom: 5px;
+  }
+  
+  .address-field {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .create-account-select {
+    width: 100%;
+    padding: 5px 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1rem;
+    box-sizing: border-box;
+    height: 40px;
+    color: #1e3a8a;
+  }
+  
+  .address-field .create-account-label {
+    text-align: left;
+    color: #1e3a8a;
+  }
+  
+  .insured-checkbox {
+    display: flex;
+    align-items: center;
+    color: #1e3a8a;
+  }
+  
+  .insured-checkbox input {
+    margin-right: 5px;
+  }
+  
+  .char-counter {
+    font-size: 0.9rem;
+    color: #1e3a8a;
+    text-align: right;
+    margin-top: -10px;
+    margin-bottom: -30px;
+  }
+  
