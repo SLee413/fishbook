@@ -19,9 +19,9 @@ const auth = require('./authentication');
 /**
  * Gets a list of posts
  * 
- * TODO: Implement these query parameters
  * @query filterWaterType String - Filters posts by specific water type
- * @query postsAfter PostId - Will return posts after a specific postId
+ * @query lastPost PostId - Will return the next posts after a given postId
+ * @query user UserId - Will return posts by a specific user
  * 
  * @return {
  * 	posts - Array of posts
@@ -29,15 +29,31 @@ const auth = require('./authentication');
  */
 router.get('/', auth, async (req : AuthRequest, res : Response) => {
 	try {
-		// TODO: add options for filters + pagination
 		const database : Db = await getDatabase();
 		const postsCollection : Collection<Post> = await database.collection("Posts");
 
-		// Filter by water type
-		let waterType = req.params
+		let filters = {}
 
-		let posts = await postsCollection.find()
-			.sort({ createdAt: -1 }) // Sort in descending order by createdAt
+		// Filter by water type
+		let waterType = req.query["waterType"];
+		if (waterType) {
+			filters["waterType"] = waterType
+		}
+
+		// Only query posts made before the given post
+		let lastPost = req.query["lastPost"];
+		if (typeof lastPost === 'string' && ObjectId.isValid(lastPost)) {
+			filters["_id"] = {$lt : new ObjectId(lastPost)}
+		}
+
+		// Only query posts made by a specific user
+		let user = req.query["user"];
+		if (typeof user === 'string' && ObjectId.isValid(user)) {
+			filters["authorId"] = new ObjectId(user)
+		}
+
+		let posts = await postsCollection.find(filters)
+			.sort({ createdAt: 1 }) // Sort in ascending order by createdAt
 			.limit(10) // Limit the result to 5 documents
 			.toArray(); // Convert the result to an array
 
@@ -132,7 +148,7 @@ router.post('/', auth, async (req : AuthRequest, res : Response) => {
  * 
  * @param postid The ID of the post
  * 
- * @query commentsAfter - CommentId - Will return comments after a specific commentId
+ * @query lastComment - CommentId - Will return comments after a specific commentId
  * 
  * @return {
  * 	comments - Array of comments
@@ -140,7 +156,6 @@ router.post('/', auth, async (req : AuthRequest, res : Response) => {
  */
 router.get('/:postid/comments', async (req : Request, res : Response) => {
 	try {
-		// TODO: pagination
 		const database : Db = await getDatabase();
 		const commentsCollection : Collection<Comment> = await database.collection("Comments");
 
@@ -150,10 +165,19 @@ router.get('/:postid/comments', async (req : Request, res : Response) => {
 			return;
 		}
 
-		let comments = await commentsCollection.find({
+		let filters = {
 			postId : new ObjectId(req.params.postid)
-		})
-			.sort({ createdAt: -1 }) // Sort in descending order by createdAt
+		}
+
+		// Only query comments  made before the given comment
+		let lastComment = req.query["lastComment"];
+		if (typeof lastComment === 'string' && ObjectId.isValid(lastComment)) {
+			filters["_id"] = {$lt : new ObjectId(lastComment)}
+		}
+
+		// Query comments
+		let comments = await commentsCollection.find(filters)
+			.sort({ createdAt: 1 }) // Sort in ascending order by createdAt
 			.limit(10) // Limit the result to 5 documents
 			.toArray(); // Convert the result to an array
 
