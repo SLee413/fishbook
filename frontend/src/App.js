@@ -5,6 +5,7 @@ import AccountPage from './pages/AccountPage';
 import MapPage from './pages/MapPage';
 import CreatePost from './pages/CreatePost';
 import LoginPage from './pages/LoginPage';
+import CreateAccountPage from './pages/CreateAccountPage'; // ✅ NEW
 import Header from './components/Header';
 
 const App = () => {
@@ -40,6 +41,7 @@ const App = () => {
           element={isLoggedIn ? <AccountPage user={user} handleLogout={handleLogout} /> : <Navigate to="/login" />}
         />
         <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
+        <Route path="/create-account" element={<CreateAccountPage />} /> {/* ✅ NEW ROUTE */}
       </Routes>
     </Router>
   );

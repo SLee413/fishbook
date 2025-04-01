@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import '../css/Login.css';
 
 const AccountPage = ({ user, handleLogout }) => {
   const navigate = useNavigate();
@@ -10,30 +11,20 @@ const AccountPage = ({ user, handleLogout }) => {
   };
 
   return (
-    <main style={{ padding: '20px' }}>
-      <h2>Account Page</h2>
-
-      {user ? (
-        <div style={{ marginTop: '20px' }}>
-          <p><strong>Username:</strong> {user.username}</p>
-          <p><strong>Email:</strong> {user.email}</p>
-          <p><strong>Member Since:</strong> {user.memberSince}</p>
-
-          <button
-            onClick={onLogout}
-            style={{
-              marginTop: '20px',
-              padding: '10px 20px',
-              fontSize: '16px',
-              cursor: 'pointer',
-            }}
-          >
-            Logout
-          </button>
-        </div>
-      ) : (
-        <p>No user information available.</p>
-      )}
+    <main className="login-page">
+      <div className="login-container">
+        <h2 className="login-title">Account Page</h2>
+        {user ? (
+          <div style={{ marginTop: '20px', textAlign: 'left' }}>
+            <p><strong>Username:</strong> {user.username}</p>
+            <p><strong>Email:</strong> {user.email}</p>
+            <p><strong>Member Since:</strong> {user.memberSince}</p>
+            <button className="login-button" style={{ marginTop: '20px' }} onClick={onLogout}>Logout</button>
+          </div>
+        ) : (
+          <p>No user information available.</p>
+        )}
+      </div>
     </main>
   );
 };

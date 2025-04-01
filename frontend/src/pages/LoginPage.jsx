@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import '../css/Login.css';
 
 const LoginPage = ({ onLogin }) => {
   const [username, setUsername] = useState('');
@@ -9,35 +10,46 @@ const LoginPage = ({ onLogin }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Simulate successful login
     if (username && password) {
-      onLogin(username);       // Pass username to App
-      navigate('/account');    // Go to account page after login
+      onLogin(username);
+      navigate('/account');
     } else {
       alert('Enter username and password!');
     }
   };
 
+  const handleCreateAccount = () => {
+    navigate('/create-account');
+  };
+
   return (
-    <main style={{ padding: '20px' }}>
-      <h2>Login</h2>
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxWidth: '300px' }}>
-        <input
-          type="text"
-          placeholder="Username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          style={{ padding: '10px', fontSize: '16px' }}
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          style={{ padding: '10px', fontSize: '16px' }}
-        />
-        <button type="submit" style={{ padding: '10px', fontSize: '16px', cursor: 'pointer' }}>Login</button>
-      </form>
+    <main className="login-page">
+      <div className="login-container">
+        <h2 className="login-title">Login</h2>
+        <form onSubmit={handleSubmit} className="login-form">
+          <label className="login-label">Username</label>
+          <input
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            className="login-input"
+            placeholder="Username"
+          />
+          <label className="login-label">Password</label>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="login-input"
+            placeholder="Password"
+          />
+          <button type="submit" className="login-button">Login</button>
+        </form>
+        <div className="or-divider">or</div>
+        <button onClick={handleCreateAccount} className="create-account-button">
+          Create an Account
+        </button>
+      </div>
     </main>
   );
 };

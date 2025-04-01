@@ -1,0 +1,129 @@
+.login-page {
+    font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
+    color: #1e3a8a;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #fff;
+    min-height: 100vh;
+    padding: 20px;
+  }
+  
+  .login-container {
+    max-width: 550px;
+    width: 100%;
+    padding: 20px;
+    text-align: center;
+  }
+  
+  .login-title {
+    font-size: 2rem;
+    color: #1e3a8a;
+    margin-bottom: 20px;
+  }
+  
+  .login-form {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .login-label {
+    font-size: 1rem;
+    font-weight: bolder;
+    margin-bottom: 5px;
+    color: #1e3a8a;
+  }
+  
+  .login-input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    outline: none;
+    font-size: 1rem;        /* same size as Create Account */
+    color: #000000;         /* user input = black */
+  }
+  
+  .login-input:focus {
+    border-color: #1e3a8a;
+  }
+  
+  .login-options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 20px;
+  }
+  
+  .remember-me {
+    font-size: 1rem;
+    font-weight: bolder;
+    color: #1e3a8a;
+  }
+  
+  .create-account-button {
+    background-color: #1e3a8a;
+    color: #ffffff;
+    padding: 10px 0;
+    width: 100%;
+    border: none;
+    border-radius: 5px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    margin-top: 10px;
+  }
+  
+  .create-account-button:hover {
+    background-color: #1e3a8a;
+    color: #ffffff;
+  }
+  
+  .or-divider {
+    width: 100%;
+    margin: 10px 0;
+    font-size: 1rem;
+    color: #1e3a8a;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .or-divider::before,
+  .or-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background-color: #ccc;
+    margin: 0 10px;
+  }
+  
+  .forgot-password {
+    color: #1e3a8a;
+    text-decoration: underline;
+    cursor: pointer;
+    font-weight: bolder;
+  }
+  
+  .login-button {
+    background-color: #1e3a8a;
+    color: #fff;
+    padding: 10px 0;
+    width: 100%;
+    border: none;
+    border-radius: 5px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .login-button:hover {
+    background-color: #1e3a8a;
+  }
+  
