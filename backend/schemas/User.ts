@@ -19,6 +19,8 @@ export const userSchema = z.object({
 	profilePictureUrl : z.string(),
 	email : z.string(),
 
+
+	totalPosts : z.number(),
 	lastLoginAt : z.date(),
 	createdAt: z.date()
 });

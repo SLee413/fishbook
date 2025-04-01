@@ -86,6 +86,7 @@ router.post('/create', async (req : AuthRequest, res : Response) => {
 		let newUser : User = {
 			createdAt : new Date(),
 			lastLoginAt : new Date(),
+			totalPosts : 0
 		}
 
 		// Transfer properties from body to post

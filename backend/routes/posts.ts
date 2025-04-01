@@ -96,6 +96,7 @@ router.post('/', auth, async (req : AuthRequest, res : Response) => {
 	try {
 		const database : Db = await getDatabase();
 		const postsCollection : Collection<Post> = await database.collection("Posts");
+		const usersCollection : Collection<User> = await database.collection("Users");
 
 		let user : User = req.user;
 
@@ -129,8 +130,15 @@ router.post('/', auth, async (req : AuthRequest, res : Response) => {
 		}
 
 		let postData : Post = result.data;
-		
 		let postInsertion = await postsCollection.insertOne(postData);
+
+		// Add 1 to the user's total post count
+		if (postInsertion.acknowledged) {
+			usersCollection.updateOne({"_id" : user._id}, {
+				$set: { 'totalPosts': user.totalPosts + 1 },
+			});
+			
+		}
 
 		res.status(201).send({
 			postId : postInsertion.insertedId
