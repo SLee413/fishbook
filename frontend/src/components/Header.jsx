@@ -20,7 +20,7 @@ const Header = ({ isLoggedIn }) => {
           </li>
           <li className={styles.navItem}>
             {isLoggedIn ? (
-              <Link to="/account" className={styles.navLink}>Account</Link>
+              <Link to="/account/edit" className={styles.navLink}>Account</Link>
             ) : (
               <Link to="/login" className={styles.navLink}>Login</Link>
             )}
