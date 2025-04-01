@@ -21,6 +21,7 @@ const auth = require('./authentication');
  * 
  * @query filterWaterType String - Filters posts by specific water type
  * @query lastPost PostId - Will return the next posts after a given postId
+ * @query user UserId - Will return posts by a specific user
  * 
  * @return {
  * 	posts - Array of posts
@@ -43,6 +44,12 @@ router.get('/', auth, async (req : AuthRequest, res : Response) => {
 		let lastPost = req.query["lastPost"];
 		if (typeof lastPost === 'string' && ObjectId.isValid(lastPost)) {
 			filters["_id"] = {$lt : new ObjectId(lastPost)}
+		}
+
+		// Only query posts made by a specific user
+		let user = req.query["user"];
+		if (typeof user === 'string' && ObjectId.isValid(user)) {
+			filters["authorId"] = new ObjectId(user)
 		}
 
 		let posts = await postsCollection.find(filters)
