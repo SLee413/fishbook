@@ -1,10 +1,14 @@
 import { postsRouter, usersRouter } from "./routes";
+import * as cors from "cors";
 const express = require('express');
 const path = require('path');
 const app = express();
 
 // Configure environment variables
 require('dotenv').config();
+
+// Configure cors to allow the react app
+app.use(cors());
 
 // Parse JSON bodies
 app.use(express.json());
