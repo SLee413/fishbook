@@ -34,3 +34,4 @@ export const postSchema = z.object({
 });
 
 export type Post = z.infer<typeof postSchema>;
+export type likedPost = Post & {liked : boolean};

@@ -7,9 +7,9 @@
  * 
  */
 
-import { Auth, Collection, Db, ObjectId } from 'mongodb';
+import { Collection, Db, ObjectId } from 'mongodb';
 import { getDatabase } from '../clients/mongoclient';
-import { Post, postSchema, User, Comment, commentSchema, Like, likeSchema } from '../schemas/index';
+import { Post, likedPost, postSchema, User, Comment, commentSchema, Like, likeSchema } from '../schemas/index';
 import { Request, Response, Router } from 'express';
 import { AuthRequest } from './authentication';
 
@@ -73,8 +73,6 @@ router.get('/', auth, async (req : AuthRequest, res : Response) => {
 			// Map it to a simpler array to make it easier - we convert ids to strings for easier comparison
 			let likedPostIds = likes.map((l : Like) => l.postId.toString());
 
-			type likedPost = Post & {liked : boolean};
-
 			let postsWithLikes : [likedPost?] = [];
 
 			// Iterate through each post to see if there's a like object
@@ -108,6 +106,63 @@ router.get('/', auth, async (req : AuthRequest, res : Response) => {
 		console.error(error);
 		res.status(500).send("Internal error");
 	}
+});
+
+/**
+ * Gets a specific post by ID
+ * 
+ * IF you supply an authenticated user, the post will have a liked field
+ * 
+ * @return post - the post object
+*/
+router.get('/:postid', auth, async (req : AuthRequest, res : Response) => {
+   try {
+	   const database : Db = await getDatabase();
+	   const postsCollection : Collection<Post> = await database.collection("Posts");
+	   const likesCollection : Collection<Like> = await database.collection("Likes");
+
+		// Ensure postid is valid
+		if (!ObjectId.isValid(req.params.postid)) {
+			res.status(404).send("Invalid post");
+			return;
+		}
+
+		// Ensure post exists
+		let post = await postsCollection.findOne({
+			_id : new ObjectId(req.params.postid)
+		});
+		if (post == null) {
+			res.status(404).send("Invalid post");
+			return;
+		}
+
+		// If there's an authenticated user, check its like status
+		if (req.user != null) {
+			// Initialize post as not liked
+			let newPost = post as likedPost;
+			newPost.liked = false;
+
+			// Query the like collection
+			let likeDocument = await likesCollection.findOne({
+				authorId : req.user._id,
+				postId : post._id
+			});
+			// If the user liked it, set to true
+			if (likeDocument != null) {
+				newPost.liked = true;
+			}
+
+			res.send(newPost);
+			return;
+		}
+
+		res.send(post);
+
+   // Log errors and return 500
+   } catch (error) {
+	   console.error(error);
+	   res.status(500).send("Internal error");
+   }
 });
 
 /**

@@ -13,6 +13,7 @@ import { Post, postSchema, User, Comment, userSchema } from '../schemas/index';
 import { Request, Response, Router } from 'express';
 import { AuthRequest } from './authentication';
 
+const auth = require('./authentication');
 
 const jwt = require("jsonwebtoken");
 
@@ -51,6 +52,62 @@ router.get('/:userid', async (req : AuthRequest, res : Response) => {
 		}
 		
 
+		res.send(user);
+	
+	// Log errors and return 500
+	} catch (error) {
+		console.error(error);
+		res.status(500).send("Internal error");
+	}
+});
+
+/** 
+ * Edits the logged in user's data
+ * 
+ * @requires authentication
+ * 
+ * @body A JSON object of fields to update, which can be:
+ * 	- name -				String
+ * 	- password - 			String
+ * 	- bio -					String
+ * 	- profilePictureURL - 	String
+ * 	- email - 				String
+ * 
+ * @return The updated User object for the particular user (minus password)
+ */
+const EditiableFields = ["name", "password", "bio", "profilePictureURL", "email"];
+router.post('/update', auth, async (req : AuthRequest, res : Response) => {
+	// Ensure user is authenticated
+	if (!req.user) {
+		res.status(401).send("Unauthorized");
+		return;
+	}
+
+	try {
+		const database : Db = await getDatabase();
+		const usersCollection : Collection<User> = await database.collection("Users");
+
+		let replacements = {};
+
+		// Create a replace filter for valid fields to replace
+		for (let property in req.body) {
+			// Ensure it's editable and types match
+			if (!EditiableFields.includes(property)) continue;
+			if (typeof(req.body[property]) != typeof(req.user[property])) continue;
+
+			replacements[property] = req.body[property];
+		}
+
+		// Find the user
+		let user = await usersCollection.findOneAndUpdate({
+			_id : req.user._id
+		}, {"$set" : replacements}, { returnDocument: "after"});
+
+		// Don't send everyone this user's password
+		if (user.password) {
+			delete user["password"];
+		}
+		
 		res.send(user);
 	
 	// Log errors and return 500
