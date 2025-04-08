@@ -9,7 +9,7 @@
 
 import { Auth, Collection, Db, ObjectId } from 'mongodb';
 import { getDatabase } from '../clients/mongoclient';
-import { Post, postSchema, User, Comment, commentSchema } from '../schemas/index';
+import { Post, postSchema, User, Comment, commentSchema, Like, likeSchema } from '../schemas/index';
 import { Request, Response, Router } from 'express';
 import { AuthRequest } from './authentication';
 
@@ -23,6 +23,8 @@ const auth = require('./authentication');
  * @query lastPost PostId - Will return the next posts after a given postId
  * @query user UserId - Will return posts by a specific user
  * 
+ * IF you supply an authenticated user, each post will have a liked field
+ * 
  * @return {
  * 	posts - Array of posts
  * }
@@ -31,11 +33,13 @@ router.get('/', auth, async (req : AuthRequest, res : Response) => {
 	try {
 		const database : Db = await getDatabase();
 		const postsCollection : Collection<Post> = await database.collection("Posts");
+		const likesCollection : Collection<Like> = await database.collection("Likes");
+
 
 		let filters = {}
 
 		// Filter by water type
-		let waterType = req.query["waterType"];
+		let waterType = req.query["filterWaterType"];
 		if (waterType) {
 			filters["waterType"] = waterType
 		}
@@ -53,9 +57,48 @@ router.get('/', auth, async (req : AuthRequest, res : Response) => {
 		}
 
 		let posts = await postsCollection.find(filters)
-			.sort({ createdAt: 1 }) // Sort in ascending order by createdAt
-			.limit(10) // Limit the result to 5 documents
+			.sort({ datePosted: -1 }) // Sort in ascending order by datePosted
+			.limit(10) // Limit the result to 10 documents
 			.toArray(); // Convert the result to an array
+
+		// If there's an authenticated user, return whether or not they liked each post
+		if (req.user) {
+			// Query likes the author made for posts in the previous list
+			let likes = await likesCollection.find({
+				authorId : req.user._id,
+				postId : {
+					"$in" : posts.map((p : Post) => p._id)
+				}
+			}).toArray();
+			// Map it to a simpler array to make it easier - we convert ids to strings for easier comparison
+			let likedPostIds = likes.map((l : Like) => l.postId.toString());
+
+			type likedPost = Post & {liked : boolean};
+
+			let postsWithLikes : [likedPost?] = [];
+
+			// Iterate through each post to see if there's a like object
+			posts.forEach((post : Post) => {
+				// Create a new liked post object
+				let newPost = post as likedPost;
+				newPost.liked = false;
+
+				// Set it to liked if it's liked
+				if (likedPostIds.includes(post._id.toString())) {
+					newPost.liked = true;
+				}
+
+				// Add to array
+				postsWithLikes.push(newPost);
+			});
+
+			// Send posts with likes
+			res.send({
+				posts : postsWithLikes
+			});
+
+			return;
+		}
 
 		res.send({
 			posts : posts
@@ -70,7 +113,7 @@ router.get('/', auth, async (req : AuthRequest, res : Response) => {
 /**
  * Creates a new post
  * 
- * Requires an authenticated user (see ./authentication)
+ * @requires authentication
  * 
  * @body A JSON object that contains:
  * 	- imageURL	-	String
@@ -135,7 +178,7 @@ router.post('/', auth, async (req : AuthRequest, res : Response) => {
 		// Add 1 to the user's total post count
 		if (postInsertion.acknowledged) {
 			usersCollection.updateOne({"_id" : user._id}, {
-				$set: { 'totalPosts': user.totalPosts + 1 },
+				$inc: { 'totalPosts': 1 },
 			});
 			
 		}
@@ -202,6 +245,7 @@ router.get('/:postid/comments', async (req : Request, res : Response) => {
 
 /** 
  * Creates a comment on a post
+ * @requires authentication
  * 
  * @param postid The ID of the post
  * 
@@ -273,6 +317,88 @@ router.post('/:postid/comments', auth, async (req : AuthRequest, res : Response)
 	}
 });
 
-// TODO: Likes
+/** 
+ * Adds or removes a like on a post
+ * @requires authentication
+ * 
+ * @param postid The ID of the post
+ * 
+ * @return {
+ * 	likes - the number of likes on the post,
+ * 	liked - whether the user currently has liked the post
+ * }
+ */
+ router.post('/:postid/like', auth, async (req : AuthRequest, res : Response) => {
+	// Ensure user is authenticated
+	if (!req.user) {
+		res.status(401).send("Unauthorized");
+		return;
+	}
+
+	try {
+		const database : Db = await getDatabase();
+		const postsCollection : Collection<Post> = await database.collection("Posts");
+		const likesCollection : Collection<Like> = await database.collection("Likes");
+	
+		// Ensure postid is valid
+		if (!ObjectId.isValid(req.params.postid)) {
+			res.status(404).send("Invalid post");
+			return;
+		}
+	
+		// Ensure post exists
+		let post = await postsCollection.findOne({
+			_id : new ObjectId(req.params.postid)
+		});
+		if (post == null) {
+			res.status(404).send("Invalid post");
+			return;
+		}
+	
+		// Check if a like object exists
+		let likeDocument = await likesCollection.findOne({
+			postId : post._id,
+			authorId : req.user._id
+		});
+
+		// Like does not exist, create it
+		if (likeDocument == null) {
+			// Create the like document
+			likesCollection.insertOne({
+				authorId : req.user._id,
+				postId : post._id
+			});
+
+			// Update the post's likes
+			let updateResult = await postsCollection.findOneAndUpdate({"_id" : post._id}, {
+				$inc : {'likes' : 1}
+			}, { returnDocument : "after" });
+
+			res.send({
+				likes : updateResult.likes,
+				liked : true
+			});
+			return;
+		} else {
+			// Like does exist, delete it and decrement post counter
+			likesCollection.findOneAndDelete({"_id" : likeDocument._id});
+
+			let updateResult = await postsCollection.findOneAndUpdate({"_id" : post._id}, {
+				$inc : {'likes' : -1}
+			}, { returnDocument : "after" });
+
+			res.send({
+				likes : updateResult.likes,
+				liked : false
+			});
+			return;
+		}
+	
+	// Log errors and return 500
+	} catch (error) {
+		console.error(error);
+		res.status(500).send("Internal error");
+	}
+});
 
 export const postsRouter = router;
