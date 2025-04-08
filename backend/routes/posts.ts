@@ -39,7 +39,7 @@ router.get('/', auth, async (req : AuthRequest, res : Response) => {
 		let filters = {}
 
 		// Filter by water type
-		let waterType = req.query["waterType"];
+		let waterType = req.query["filterWaterType"];
 		if (waterType) {
 			filters["waterType"] = waterType
 		}
