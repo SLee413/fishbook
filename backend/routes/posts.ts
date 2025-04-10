@@ -307,7 +307,9 @@ router.get('/:postid/comments', async (req : Request, res : Response) => {
  * @body A JSON object that contains:
  *	- comment - 	String
  * 
- * @return The CommentId of the new comment
+ * @return {
+ * 	commentId - The ID of the new comment
+ * }
  */
 router.post('/:postid/comments', auth, async (req : AuthRequest, res : Response) => {
 	// Ensure user is authenticated
@@ -363,7 +365,9 @@ router.post('/:postid/comments', auth, async (req : AuthRequest, res : Response)
 			
 		let commentInsertion = await commentsCollection.insertOne(commentData);
 	
-		res.status(201).send(commentInsertion.insertedId);
+		res.status(201).send({
+			commendId : commentInsertion.insertedId
+		});
 	
 	// Log errors and return 500
 	} catch (error) {

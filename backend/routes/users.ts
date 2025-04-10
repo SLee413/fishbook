@@ -70,7 +70,7 @@ router.get('/:userid', async (req : AuthRequest, res : Response) => {
  * 	- name -				String
  * 	- password - 			String
  * 	- bio -					String
- * 	- profilePictureURL - 	String
+ * 	- profilePictureUrl - 	String
  * 	- email - 				String
  * 
  * @return The updated User object for the particular user (minus password)
@@ -124,7 +124,7 @@ router.post('/update', auth, async (req : AuthRequest, res : Response) => {
  * 	- name -				String
  * 	- password - 			String
  * 	- bio -					String
- * 	- profilePictureURL - 	String
+ * 	- profilePictureUrl - 	String
  * 	- email - 				String
  * 
  * @return {
