@@ -1,4 +1,5 @@
 import { postsRouter, usersRouter } from "./routes";
+
 import * as cors from "cors";
 const express = require('express');
 const path = require('path');
@@ -14,7 +15,15 @@ app.use(cors());
 app.use(express.json());
 
 // Posts API
-app.use('/posts', postsRouter);
+app.use('/api/posts', postsRouter); 
+
+app.post('/api/test-log', (req, res) => {
+	console.log("✅ HIT /api/test-log:", req.body);
+	res.send("Logged!");
+  });
+  
+
+
 
 // Users API
 app.use('/users', usersRouter);

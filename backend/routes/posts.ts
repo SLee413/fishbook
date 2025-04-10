@@ -460,4 +460,97 @@ router.post('/:postid/comments', auth, async (req : AuthRequest, res : Response)
 	}
 });
 
+// Accepts a new post from the map app (no auth for now, adjust if needed)
+// posts.ts (already inside your router file)
+router.post('/from-map', async (req: AuthRequest, res: Response) => {
+
+	console.log("📬 Received POST /api/posts/from-map");
+	console.log("📦 Body received:", req.body); // Add this
+  
+	try {
+		// log request body for debugging
+			console.log("📦 Received body:", req.body);
+	  const db: Db = await getDatabase();
+	  const postsCollection: Collection<Post> = db.collection("Posts");
+  
+	  const {
+		imageUrl,
+		dateCaught,
+		location,
+		species,
+		bait,
+		waterType,
+		weather,
+		description,
+		weight,
+		length
+	  } = req.body;
+	  
+	  
+  
+	  if (
+		!imageUrl ||
+		!dateCaught ||
+		!location ||
+		typeof location.lat !== 'number' ||
+		typeof location.lng !== 'number'
+	  ) {
+		res.status(400).send("Missing or invalid required fields");
+		return;
+	  }
+  
+	  const newPost: Post = {
+		_id: new ObjectId(),
+		authorId: new ObjectId(), // Replace later
+		authorName: "MapUser",
+		authorProfilePicture: "/default.png",
+		datePosted: new Date(),
+		likes: 0,
+		imageUrl,
+		dateCaught: new Date(dateCaught),
+		location,
+		species: species || undefined,
+		bait: bait || undefined,
+		waterType: waterType || undefined,
+		weather: weather || undefined,
+		description: description ?? undefined, // ✅ null-safe
+		weight: weight ?? undefined,           // ✅ null-safe
+		length: length ?? undefined            // ✅ null-safe
+	  };
+	  
+	  
+
+	  if (!req.body.location || typeof req.body.location.lat !== 'number') {
+		console.error("❌ Invalid or missing location:", req.body.location);
+	  }
+	
+  
+	  const result = postSchema.safeParse(newPost);
+	  if (!result.success) {
+		console.error("❌ Validation Error:", result.error);
+		res.status(400).send("Invalid post structure");
+		return;
+	  }
+  
+	  await postsCollection.insertOne(result.data);
+	  res.status(201).send({ message: "Map post created" });
+  
+	} catch (error) {
+	  console.error("❌ Error saving map post:", error);
+	  res.status(500).send("Internal server error");
+	}
+  });
+  
+  
+
+
+
+
+
+
+
+
+
+
+
 export const postsRouter = router;

@@ -20,18 +20,34 @@ export const postSchema = z.object({
 	authorProfilePicture : z.string(),
 	datePosted : z.date(),
 	likes: z.number(),
-
-	imageUrl: z.string().regex(/.*/),	// TODO: add url regexing
+  
+	imageUrl: z.string().regex(/.*/),
 	dateCaught: z.date(),
 	location: z.object({
-		lat : z.number(),
-		lng : z.number()
+	  lat : z.number(),
+	  lng : z.number()
 	}),
-	
+  
 	species: z.string().optional(),
 	bait: z.string().optional(),
 	waterType: z.string().optional(),
-});
+  
+	// ✅ Allow nulls here
+	description: z.union([z.string(), z.null()]).optional(),
+	weight: z.union([z.string(), z.null()]).optional(),
+	length: z.union([z.string(), z.null()]).optional(),
+	weather: z
+	  .object({
+		temperature: z.number().nullable(),
+		precipitation: z.number().nullable(),
+		windspeed: z.number().nullable(),
+		weathercode: z.number().nullable(),
+	  })
+	  .optional()
+	  .nullable(),
+  });
+  
+  
 
 export type Post = z.infer<typeof postSchema>;
 export type likedPost = Post & {liked : boolean};
