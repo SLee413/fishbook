@@ -60,18 +60,35 @@ const CreatePost = () => {
   async function fetchWeather(lat, lng, datetime) {
     const [date, time] = datetime.split("T");
     const hour = parseInt(time.split(":")[0]);
-
-    const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lng}&start_date=${date}&end_date=${date}&hourly=temperature_2m,precipitation,weathercode,windspeed_10m&temperature_unit=fahrenheit&precipitation_unit=inch&windspeed_unit=mph&timezone=America%2FNew_York`;
-    const res = await fetch(url);
-    const data = await res.json();
-
-    return {
-      temperature: data.hourly.temperature_2m[hour],
-      precipitation: data.hourly.precipitation[hour],
-      windspeed: data.hourly.windspeed_10m[hour],
-      weathercode: data.hourly.weathercode[hour],
-    };
+  
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&hourly=temperature_2m,precipitation,weathercode,windspeed_10m&temperature_unit=fahrenheit&precipitation_unit=inch&windspeed_unit=mph&timezone=America%2FNew_York`;
+  
+    try {
+      const res = await fetch(url);
+      const data = await res.json();
+  
+      const weather = {
+        temperature: data.hourly.temperature_2m?.[hour] ?? null,
+        precipitation: data.hourly.precipitation?.[hour] ?? null,
+        windspeed: data.hourly.windspeed_10m?.[hour] ?? null,
+        weathercode: data.hourly.weathercode?.[hour] ?? null,
+      };
+  
+      console.log("🌤️ Fetched weather:", weather);
+  
+      return weather;
+    } catch (err) {
+      console.error("❌ Failed to fetch weather:", err);
+      return {
+        temperature: null,
+        precipitation: null,
+        windspeed: null,
+        weathercode: null
+      };
+    }
   }
+  
+  
 
   const handlePostSubmit = async (e) => {
     e.preventDefault();
