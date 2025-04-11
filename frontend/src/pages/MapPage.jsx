@@ -170,6 +170,7 @@ const MapPage = () => {
         )}
       </div>
   
+  
       {/* SIDEBAR – Clicked Forecast */}
       <aside style={{
         flex: 1,
