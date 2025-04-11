@@ -31,6 +31,8 @@ export const postSchema = z.object({
 	species: z.string().optional(),
 	bait: z.string().optional(),
 	waterType: z.string().optional(),
+	moonPhase: z.string().optional(),
+	
   
 	// ✅ Allow nulls here
 	description: z.union([z.string(), z.null()]).optional(),

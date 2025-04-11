@@ -483,7 +483,8 @@ router.post('/from-map', async (req: AuthRequest, res: Response) => {
 		weather,
 		description,
 		weight,
-		length
+		length,
+		moonPhase
 	  } = req.body;
 	  
 	  
@@ -515,7 +516,8 @@ router.post('/from-map', async (req: AuthRequest, res: Response) => {
 		weather: weather || undefined,
 		description: description ?? undefined, // ✅ null-safe
 		weight: weight ?? undefined,           // ✅ null-safe
-		length: length ?? undefined            // ✅ null-safe
+		length: length ?? undefined,
+		moonPhase: moonPhase ?? undefined            // ✅ null-safe
 	  };
 	  
 	  
