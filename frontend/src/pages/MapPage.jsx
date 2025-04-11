@@ -33,20 +33,20 @@ const MapPage = () => {
               const weather = post.weather || {};
 
               const popupContent = `
-                <strong>${post.species || "Unknown Fish"}</strong><br/>
-                ${getWeatherIcon(weather.weathercode)}<br/>
-                🎣 <strong>Angler:</strong> ${post.authorName || "Unknown"}<br/>
-                📝 ${post.description || ""}<br/>
-                ${post.weight ? `⚖️ Weight: ${post.weight}<br/>` : ""}
-                ${post.length ? `📏 Length: ${post.length}<br/>` : ""}
-                ${post.bait ? `🪱 Bait: ${post.bait}<br/>` : ""}
-                ${post.waterType ? `💧 Water: ${post.waterType}<br/>` : ""}
-                ${post.moonPhase ? `🌙 Moon: ${post.moonPhase}<br/>` : ""}
-                🕒 ${new Date(post.dateCaught).toLocaleString()}<br/>
-                🌡️ Temp: ${weather.temperature ?? "?"}°F<br/>
-                💧 Precip: ${weather.precipitation ?? "?"} in<br/>
-                🌬️ Wind: ${weather.windspeed ?? "?"} mph<br/>
-              `;
+                  🎣 <strong>Angler:</strong> ${post.authorName || "Unknown"}<br/>
+                  🐟 <strong>Fish Type:</strong> ${post.species || "Unknown Fish"}<br/>
+                  📝 <strong>Description:</strong> ${post.description || "No description"}<br/>
+                  ${post.bait ? `🪱 <strong>Bait:</strong> ${post.bait}<br/>` : ""}
+                  ${post.waterType ? `💧 <strong>Water:</strong> ${post.waterType}<br/>` : ""}
+                  ${post.weight ? `⚖️ <strong>Weight:</strong> ${post.weight}<br/>` : ""}
+                  ${post.length ? `📏 <strong>Length:</strong> ${post.length}<br/>` : ""}
+                  🕒 <strong>Caught:</strong> ${new Date(post.dateCaught).toLocaleString()} ${getWeatherIcon(weather.weathercode)}<br/>
+                  ${post.moonPhase ? `🌙 <strong>Moon:</strong> ${post.moonPhase}<br/>` : ""}
+                  🌡️ <strong>Temp:</strong> ${weather.temperature ?? "?"}°F<br/>
+                  💧 <strong>Precip:</strong> ${weather.precipitation ?? "?"} in<br/>
+                  🌬️ <strong>Wind:</strong> ${weather.windspeed ?? "?"} mph<br/>
+`;
+
 
               console.log("📍 Adding marker for post:", post);
 
