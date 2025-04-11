@@ -18,6 +18,9 @@ const CreatePost = () => {
   const [fishType, setFishType] = useState('');
   const [weight, setWeight] = useState('');
   const [length, setLength] = useState('');
+  const [bait, setBait] = useState('');
+  const [waterType, setWaterType] = useState('');
+
   const mapRef = useRef(null);
   const markerRef = useRef(null);
   const [selectedLatLng, setSelectedLatLng] = useState(null);
@@ -92,8 +95,8 @@ const CreatePost = () => {
       dateCaught: dateCaught.toISOString(),
       location: { lat: selectedLatLng.lat, lng: selectedLatLng.lng },
       species: fishType,
-      bait: "worms",
-      waterType: "fresh",
+      bait: bait || null,             
+      waterType: waterType || null,
       description,
       weight: weight || null,
       length: length || null,
@@ -119,22 +122,154 @@ const CreatePost = () => {
   return (
     <main style={{ display: 'flex', flexDirection: 'column', height: '100vh', padding: '20px' }}>
       <h2>Create a Post</h2>
-      <div style={{ display: 'flex', flex: 1, gap: '20px', overflow: 'hidden' }}>
-        <form onSubmit={handlePostSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxWidth: '400px', flex: 1 }}>
-          <label>Description:
-            <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={5} required />
-          </label>
-          <label>Fish Type:
-            <input type="text" value={fishType} onChange={(e) => setFishType(e.target.value)} required />
-          </label>
-          <label>Weight:
-            <input type="text" value={weight} onChange={(e) => setWeight(e.target.value)} />
-          </label>
-          <label>Length:
-            <input type="text" value={length} onChange={(e) => setLength(e.target.value)} />
-          </label>
-          <button type="submit">Post</button>
-        </form>
+      <div
+        style={{
+        display: 'flex',
+        flex: 1,
+        gap: '20px',
+        minHeight: 0,
+        overflow: 'hidden',
+        }}
+>
+
+<form
+  onSubmit={handlePostSubmit}
+  style={{
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '15px',
+    width: '350px',         
+    flexShrink: 0,          
+    flexGrow: 0,           
+    paddingRight: '20px',
+  }}
+>
+
+
+  <div>
+    <label style={{ fontWeight: 'bold' }}>Fish Type:</label>
+    <input
+      type="text"
+      value={fishType}
+      onChange={(e) => setFishType(e.target.value)}
+      placeholder="e.g., Bass, Trout"
+      style={{ padding: '10px', fontSize: '16px', width: '100%' }}
+    />
+
+  </div>
+
+  <div>
+    <label style={{ fontWeight: 'bold' }}>Description:</label>
+    <textarea
+      value={description}
+      onChange={(e) => setDescription(e.target.value)}
+      placeholder="Write your post description..."
+      rows={4}
+      style={{
+        width: '100%',
+        padding: '10px',
+        fontSize: '15px',
+        borderRadius: '6px',
+        border: '1px solid #ccc'
+      }}
+      required
+    />
+  </div>
+
+  <div>
+    <label style={{ fontWeight: 'bold' }}>Bait:</label>
+    <input
+      type="text"
+      value={bait}
+      onChange={(e) => setBait(e.target.value)}
+      placeholder="e.g., worms, lures"
+      style={{
+        width: '100%',
+        padding: '10px',
+        fontSize: '15px',
+        borderRadius: '6px',
+        border: '1px solid #ccc'
+      }}
+    />
+  </div>
+
+  <div>
+    <label style={{ fontWeight: 'bold' }}>Water Type:</label>
+    <select
+      value={waterType}
+      onChange={(e) => setWaterType(e.target.value)}
+      style={{
+        width: '100%',
+        padding: '10px',
+        fontSize: '15px',
+        borderRadius: '6px',
+        border: '1px solid #ccc'
+      }}
+    >
+      <option value="">Select type</option>
+      <option value="Fresh">Freshwater</option>
+      <option value="Salt">Saltwater</option>
+    </select>
+  </div>
+
+  <div>
+    <label style={{ fontWeight: 'bold' }}>Weight:</label>
+    <div style={{ display: 'flex', alignItems: 'center' }}>
+      <input
+        type="text"
+        value={weight}
+        onChange={(e) => setWeight(e.target.value)}
+        placeholder="e.g., 3.5"
+        style={{
+          flex: 1,
+          padding: '10px',
+          fontSize: '15px',
+          borderRadius: '6px',
+          border: '1px solid #ccc'
+        }}
+      />
+      <span style={{ marginLeft: '8px' }}>lbs</span>
+    </div>
+  </div>
+
+  <div>
+    <label style={{ fontWeight: 'bold' }}>Length:</label>
+    <div style={{ display: 'flex', alignItems: 'center' }}>
+      <input
+        type="text"
+        value={length}
+        onChange={(e) => setLength(e.target.value)}
+        placeholder="e.g., 18"
+        style={{
+          flex: 1,
+          padding: '10px',
+          fontSize: '15px',
+          borderRadius: '6px',
+          border: '1px solid #ccc'
+        }}
+      />
+      <span style={{ marginLeft: '8px' }}>in</span>
+    </div>
+  </div>
+
+  <button
+    type="submit"
+    style={{
+      padding: '12px',
+      fontSize: '16px',
+      backgroundColor: '#0077cc',
+      color: '#fff',
+      border: 'none',
+      borderRadius: '6px',
+      cursor: 'pointer',
+      marginTop: '10px'
+    }}
+  >
+    Post
+  </button>
+</form>
+
+
         <div id="map" style={{ height: '100%', flex: 2, minWidth: '400px', borderRadius: '8px' }}></div>
       </div>
     </main>
