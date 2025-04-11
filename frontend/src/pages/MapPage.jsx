@@ -2,29 +2,13 @@ import React, { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-
-
 function getWeatherIcon(code) {
   const icons = {
-    0: "☀️",      // Clear sky
-    1: "🌤️",     // Mainly clear
-    2: "⛅",      // Partly cloudy
-    3: "☁️",      // Overcast
-    45: "🌫️",     // Fog
-    48: "🌫️",     // Depositing rime fog
-    51: "🌦️",     // Drizzle: Light
-    61: "🌧️",     // Rain: Slight
-    71: "❄️",     // Snow fall: Slight
-    80: "🌦️",     // Rain showers: Slight
-    95: "⛈️",     // Thunderstorm: Slight/moderate
-    99: "⛈️",     // Thunderstorm with hail
+    0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️", 45: "🌫️", 48: "🌫️",
+    51: "🌦️", 61: "🌧️", 71: "❄️", 80: "🌦️", 95: "⛈️", 99: "⛈️"
   };
-
   return icons[code] || "❓";
 }
-
-
-
 
 const MapPage = () => {
   const mapRef = useRef(null);
@@ -36,31 +20,45 @@ const MapPage = () => {
 
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-      // 🐟 Fetch pins from the backend
       fetch('/api/posts')
         .then((res) => res.json())
         .then((data) => {
+          console.log("🎣 Posts fetched from API:", data);
           data.posts.forEach((post) => {
-            if (post.location?.lat && post.location?.lng) {
+            if (
+              post.location &&
+              typeof post.location.lat === "number" &&
+              typeof post.location.lng === "number"
+            ) {
               const weather = post.weather || {};
 
               const popupContent = `
                 <strong>${post.species || "Unknown Fish"}</strong><br/>
-                ${post.description || ""}<br/>
-                ${getWeatherIcon(post.weather?.weathercode)}<br/>
-                🕒 ${new Date(post.dateCaught).toLocaleString()}<br>
+                ${getWeatherIcon(weather.weathercode)}<br/>
+                🎣 <strong>Angler:</strong> ${post.authorName || "Unknown"}<br/>
+                📝 ${post.description || ""}<br/>
+                ${post.weight ? `⚖️ Weight: ${post.weight}<br/>` : ""}
+                ${post.length ? `📏 Length: ${post.length}<br/>` : ""}
+                ${post.bait ? `🪱 Bait: ${post.bait}<br/>` : ""}
+                ${post.waterType ? `💧 Water: ${post.waterType}<br/>` : ""}
+                ${post.moonPhase ? `🌙 Moon: ${post.moonPhase}<br/>` : ""}
+                🕒 ${new Date(post.dateCaught).toLocaleString()}<br/>
                 🌡️ Temp: ${weather.temperature ?? "?"}°F<br/>
                 💧 Precip: ${weather.precipitation ?? "?"} in<br/>
                 🌬️ Wind: ${weather.windspeed ?? "?"} mph<br/>
               `;
 
+              console.log("📍 Adding marker for post:", post);
+
               L.marker([post.location.lat, post.location.lng])
                 .addTo(map)
                 .bindPopup(popupContent);
+            } else {
+              console.warn("⚠️ Invalid location for post:", post);
             }
           });
         })
-        .catch((err) => console.error("Failed to load pins:", err));
+        .catch((err) => console.error("❌ Failed to load pins:", err));
     }
   }, []);
 

@@ -54,7 +54,7 @@ router.get('/', auth, async (req : AuthRequest, res : Response) => {
 
 		let posts = await postsCollection.find(filters)
 			.sort({ createdAt: 1 }) // Sort in ascending order by createdAt
-			.limit(10) // Limit the result to 5 documents
+			//.limit(10) // Limit the result to 5 documents
 			.toArray(); // Convert the result to an array
 
 		res.send({
@@ -298,7 +298,8 @@ router.post('/from-map', async (req: AuthRequest, res: Response) => {
 		weather,
 		description,
 		weight,
-		length
+		length,
+		moonPhase
 	  } = req.body;
 	  
 	  
@@ -330,7 +331,8 @@ router.post('/from-map', async (req: AuthRequest, res: Response) => {
 		weather: weather || undefined,
 		description: description ?? undefined, // ✅ null-safe
 		weight: weight ?? undefined,           // ✅ null-safe
-		length: length ?? undefined            // ✅ null-safe
+		length: length ?? undefined,
+		moonPhase: moonPhase ?? undefined            // ✅ null-safe
 	  };
 	  
 	  
