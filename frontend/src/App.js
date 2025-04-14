@@ -12,15 +12,9 @@ import Header from './components/Header';
 
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isCheckingLogin, setIsCheckingLogin] = useState(true);
   const [user, setUser] = useState(null);
 
-  // called when login succeeds
-  const handleLogin = (username) => {
-    setIsLoggedIn(true);
-    setUser({ username });
-  };
-
-  // called on logout
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('name');
@@ -29,15 +23,58 @@ const App = () => {
     setUser(null);
   };
 
-  // on load, check localStorage for existing session
+  const fetchUserInfo = async (userId, token) => {
+    try {
+      const res = await fetch(`/users/${userId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setUser({
+          username: data.name,
+          email: data.email,
+          memberSince: new Date(data.createdAt).toLocaleDateString(),
+          userId: userId
+        });
+        setIsLoggedIn(true);
+      } else {
+        handleLogout();
+      }
+    } catch (err) {
+      console.error("Failed to fetch user info:", err);
+      handleLogout();
+    } finally {
+      setIsCheckingLogin(false); // ✅ finished checking
+    }
+  };
+
+  const handleLogin = async (username) => {
+    const token = localStorage.getItem('token');
+    const userId = localStorage.getItem('userId');
+
+    if (token && userId) {
+      await fetchUserInfo(userId, token);
+    }
+  };
+
   useEffect(() => {
     const token = localStorage.getItem('token');
-    const username = localStorage.getItem('name');
-    if (token && username) {
-      setIsLoggedIn(true);
-      setUser({ username });
+    const userId = localStorage.getItem('userId');
+
+    if (token && userId) {
+      fetchUserInfo(userId, token);
+    } else {
+      setIsCheckingLogin(false); // ✅ nothing to check
     }
   }, []);
+
+  // while checking login, render nothing (or a loading screen)
+  if (isCheckingLogin) {
+    return <div>Loading...</div>; // you can replace this with a fancy spinner later
+  }
 
   return (
     <Router>

@@ -21,7 +21,14 @@ const LoginPage = ({ onLogin }) => {
         const data = await res.json();
         localStorage.setItem('token', data.token);
         localStorage.setItem('name', name);
-        onLogin(name);
+
+        // Try decoding the userId from the token manually, fallback for now
+        const userId = parseJwt(data.token)?.userId;
+        if (userId) {
+          localStorage.setItem('userId', userId);
+        }
+
+        await onLogin(name);
         navigate('/account');
       } else {
         const err = await res.text();
@@ -35,6 +42,14 @@ const LoginPage = ({ onLogin }) => {
 
   const handleCreateAccount = () => {
     navigate('/create-account');
+  };
+
+  const parseJwt = (token) => {
+    try {
+      return JSON.parse(atob(token.split('.')[1]));
+    } catch (e) {
+      return null;
+    }
   };
 
   return (
