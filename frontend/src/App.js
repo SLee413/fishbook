@@ -1,32 +1,43 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+
 import FeedPage from './pages/FeedPage';
 import AccountPage from './pages/AccountPage';
 import MapPage from './pages/MapPage';
 import CreatePost from './pages/CreatePost';
 import LoginPage from './pages/LoginPage';
-import CreateAccountPage from './pages/CreateAccountPage'; // ✅ NEW
+import CreateAccountPage from './pages/CreateAccountPage';
+
 import Header from './components/Header';
 
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
 
+  // called when login succeeds
   const handleLogin = (username) => {
-    const mockUser = {
-      username: username,
-      email: `${username.toLowerCase()}@fishbook.com`,
-      memberSince: 'March 2024',
-    };
-
     setIsLoggedIn(true);
-    setUser(mockUser);
+    setUser({ username });
   };
 
+  // called on logout
   const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('name');
+    localStorage.removeItem('userId');
     setIsLoggedIn(false);
     setUser(null);
   };
+
+  // on load, check localStorage for existing session
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const username = localStorage.getItem('name');
+    if (token && username) {
+      setIsLoggedIn(true);
+      setUser({ username });
+    }
+  }, []);
 
   return (
     <Router>
@@ -38,10 +49,14 @@ const App = () => {
         <Route path="/create-post" element={isLoggedIn ? <CreatePost /> : <Navigate to="/login" />} />
         <Route
           path="/account"
-          element={isLoggedIn ? <AccountPage user={user} handleLogout={handleLogout} /> : <Navigate to="/login" />}
+          element={
+            isLoggedIn
+              ? <AccountPage user={user} handleLogout={handleLogout} />
+              : <Navigate to="/login" />
+          }
         />
         <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
-        <Route path="/create-account" element={<CreateAccountPage />} /> {/* ✅ NEW ROUTE */}
+        <Route path="/create-account" element={<CreateAccountPage />} />
       </Routes>
     </Router>
   );
