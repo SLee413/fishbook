@@ -30,7 +30,7 @@ const App = () => {
 
   return (
     <Router>
-      <Header isLoggedIn={isLoggedIn} />
+      <Header isLoggedIn={isLoggedIn} setUser={setUser} />
 
       <Routes>
         <Route path="/" element={<FeedPage />} />
