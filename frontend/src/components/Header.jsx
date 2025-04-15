@@ -1,8 +1,17 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import styles from './Header.module.css';
 
-const Header = ({ isLoggedIn }) => {
+const Header = ({ isLoggedIn, setUser }) => {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    // Clear the cookie by setting it to expire
+    document.cookie = 'token=; Max-Age=0; path=/;';
+    setUser(null);
+    navigate('/');
+  };
+
   return (
     <header className={styles.header}>
       {/* Wrap logo in a Link and style it */}
@@ -25,6 +34,13 @@ const Header = ({ isLoggedIn }) => {
               <Link to="/login" className={styles.navLink}>Login / Create Account</Link>
             )}
           </li>
+          {isLoggedIn && (
+            <li className={styles.navItem}>
+              <button onClick={handleLogout} className={styles.navLink} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                Logout
+              </button>
+            </li>
+          )}
         </ul>
       </nav>
     </header>
