@@ -460,7 +460,7 @@ router.post('/:postid/comments', auth, async (req : AuthRequest, res : Response)
 	}
 });
 
-// TODO: Likes
+
 
 // Accepts a new post from the map app (no auth for now, adjust if needed)
 // posts.ts (already inside your router file)
