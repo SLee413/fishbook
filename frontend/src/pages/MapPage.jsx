@@ -1,16 +1,212 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+function getWeatherIcon(code) {
+  const icons = {
+    0: "☀️",    // Clear
+    1: "🌤️",    // Mainly clear
+    2: "⛅",     // Partly cloudy
+    3: "☁️",     // Overcast
+    45: "🌫️",   // Fog
+    48: "🌫️",   // Depositing rime fog
+    51: "🌦️",   // Light drizzle
+    53: "🌦️",   // Moderate drizzle
+    55: "🌧️",   // Dense drizzle
+    56: "🌧️",   // Freezing drizzle (light)
+    57: "🌧️",   // Freezing drizzle (dense)
+    61: "🌧️",   // Slight rain
+    63: "🌧️",   // Moderate rain
+    65: "🌧️",   // Heavy rain
+    66: "🌧️",   // Freezing rain (light)
+    67: "🌧️",   // Freezing rain (heavy)
+    71: "🌨️",   // Slight snow fall
+    73: "🌨️",   // Moderate snow fall
+    75: "❄️",   // Heavy snow fall
+    77: "❄️",   // Snow grains
+    80: "🌧️",   // Slight rain showers
+    81: "🌧️",   // Moderate rain showers
+    82: "🌧️",   // Violent rain showers
+    85: "🌨️",   // Slight snow showers
+    86: "🌨️",   // Heavy snow showers
+    95: "⛈️",   // Thunderstorm
+    96: "⛈️",   // Thunderstorm with slight hail
+    99: "⛈️"    // Thunderstorm with heavy hail
+  };
+  return icons[code] || "❓";
+}
 
 
 const MapPage = () => {
+  const mapRef = useRef(null);
+  const [forecast, setForecast] = useState(null);
+  const [userForecast, setUserForecast] = useState(null);
+
+
+  useEffect(() => {
+    if (!mapRef.current) {
+      const map = L.map('map').setView([40.0583, -74.4057], 8);
+      mapRef.current = map;
+
+      navigator.geolocation.getCurrentPosition(async (position) => {
+        const { latitude, longitude } = position.coords;
+        const weather = await fetchHourlyForecast(latitude, longitude);
+        setUserForecast(weather);
+      });
+      
+
+
+
+
+
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+      // 🐟 Fetch pins
+      fetch('/api/posts')
+        .then(res => res.json())
+        .then(data => {
+          data.posts.forEach(post => {
+            if (post.location?.lat && post.location?.lng) {
+              const weather = post.weather || {};
+              const popupContent = `
+                🎣 <strong>Angler:</strong> ${post.authorName || "Unknown"}<br/>
+                🐟 <strong>Fish Type:</strong> ${post.species || "Unknown Fish"}<br/>
+                📝 <strong>Description:</strong> ${post.description || "No description"}<br/>
+                ${post.bait ? `🪱 <strong>Bait:</strong> ${post.bait}<br/>` : ""}
+                ${post.waterType ? `💧 <strong>Water:</strong> ${post.waterType}<br/>` : ""}
+                ${post.weight ? `⚖️ <strong>Weight:</strong> ${post.weight}<br/>` : ""}
+                ${post.length ? `📏 <strong>Length:</strong> ${post.length}<br/>` : ""}
+                🕒 <strong>Caught:</strong> ${new Date(post.dateCaught).toLocaleString()} ${getWeatherIcon(weather.weathercode)}<br/>
+                ${post.moonPhase ? `🌙 <strong>Moon:</strong> ${post.moonPhase}<br/>` : ""}
+                🌡️ <strong>Temp:</strong> ${weather.temperature ?? "?"}°F<br/>
+                💧 <strong>Precip:</strong> ${weather.precipitation ?? "?"} in<br/>
+                🌬️ <strong>Wind:</strong> ${weather.windspeed ?? "?"} mph<br/>
+              `;
+              L.marker([post.location.lat, post.location.lng])
+                .addTo(map)
+                .bindPopup(popupContent);
+            }
+          });
+        });
+
+      // 📅 Left-click: current & hourly forecast in sidebar
+      map.on('click', async (e) => {
+        const { lat, lng } = e.latlng;
+        const weather = await fetchHourlyForecast(lat, lng);
+        setForecast(weather);
+      });
+    }
+  }, []);
+
+
+
+  function getPrecipIcon(code) {
+    if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(code)) return "🌧️ Rain:";
+    if ([66, 67].includes(code)) return "🌧️❄️ Freezing Rain:";
+    if ([71, 73, 75, 77, 85, 86].includes(code)) return "❄️ Snow:";
+    if ([95, 96, 99].includes(code)) return "⛈️ Thunderstorm:";
+    return "💧None:"; // Fallback label
+  }
+  
+
+
+
+
+  const fetchHourlyForecast = async (lat, lng) => {
+    const today = new Date().toISOString().split("T")[0];
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current_weather=true&hourly=temperature_2m,precipitation,windspeed_10m,weathercode&temperature_unit=fahrenheit&precipitation_unit=inch&windspeed_unit=mph&timezone=America%2FNew_York&start_date=${today}&end_date=${today}`;
+    const res = await fetch(url);
+    const data = await res.json();
+
+    const now = new Date();
+    const currentHourIndex = data.hourly.time.findIndex(t => new Date(t).getHours() === now.getHours());
+
+    return {
+      current: {
+        temperature: data.current_weather.temperature,
+        windspeed: data.current_weather.windspeed,
+        weathercode: data.current_weather.weathercode,
+      },
+      hourly: data.hourly.time.map((time, i) => ({
+        hour: new Date(time).getHours(),
+        label: new Date(time).toLocaleTimeString([], { hour: 'numeric', hour12: true }),
+        temperature: data.hourly.temperature_2m[i],
+        precipitation: data.hourly.precipitation[i],
+        windspeed: data.hourly.windspeed_10m[i],
+        weathercode: data.hourly.weathercode[i],
+      })),
+      indexNow: currentHourIndex
+    };
+  };
+
   return (
-    <div>
-      <main style={{ padding: '20px' }}>
-        <h2>Map Page</h2>
-        <p>This is where the fishing map will be displayed.</p>
-        {/* You can add your map component or integration here */}
-      </main>
+    <div style={{ display: 'flex', height: '100vh' }}>
+      
+      {/* MAP with Your Weather floating in top-right corner */}
+      <div id="map" style={{ position: 'relative', flex: 3 }}>
+        {userForecast && (
+          <div style={{
+            position: 'absolute',
+            top: '10px',
+            right: '10px',
+            background: 'white',
+            padding: '10px 15px',
+            borderRadius: '10px',
+            boxShadow: '0 0 10px rgba(0,0,0,0.2)',
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '15px',
+            fontSize: '14px',
+            maxWidth: '600px',
+            flexWrap: 'wrap'
+          }}>
+            <span><strong>📍 Your Weather:</strong></span>
+            <span>{getWeatherIcon(userForecast.current.weathercode)} {userForecast.current.temperature}°F</span>
+            <span>{getPrecipIcon(userForecast.hourly[userForecast.indexNow]?.weathercode)} {userForecast.hourly[userForecast.indexNow]?.precipitation} in</span>
+            <span>🌬️ Wind: {userForecast.current.windspeed} mph</span>
+          </div>
+        )}
+      </div>
+  
+  
+      {/* SIDEBAR – Clicked Forecast */}
+      <aside style={{
+        flex: 1,
+        padding: '20px',
+        backgroundColor: '#f4f4f4',
+        borderLeft: '1px solid #ccc',
+        overflowY: 'auto'
+      }}>
+        <h3>📍 Clicked Location</h3>
+        {forecast ? (
+          <div>
+            <p>{getWeatherIcon(forecast.current.weathercode)} {forecast.current.temperature}°F</p>
+            <p>{getPrecipIcon(forecast.hourly[forecast.indexNow]?.weathercode)} {forecast.hourly[forecast.indexNow]?.precipitation} in</p>
+            <p>🌬️ Wind: {forecast.current.windspeed} mph</p>
+  
+            <h4>⏱ Hourly Forecast</h4>
+            <ul style={{ paddingLeft: 0, listStyle: 'none' }}>
+              {forecast.hourly
+                .filter(hour => hour.hour >= 0 && hour.hour <= 23)
+                .map((hour, i) => (
+                  <li key={i} style={{ marginBottom: '8px' }}>
+                    <strong>{hour.label}</strong>: {getWeatherIcon(hour.weathercode)} {hour.temperature}°F,
+                    {getPrecipIcon(hour.weathercode)} {hour.precipitation} in, 🌬️ {hour.windspeed} mph
+                  </li>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          <p>Click a location to view forecast.</p>
+        )}
+      </aside>
     </div>
   );
+  
+  
+  
 };
 
 export default MapPage;
