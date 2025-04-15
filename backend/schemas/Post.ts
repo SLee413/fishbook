@@ -35,18 +35,17 @@ export const postSchema = z.object({
 	
   
 	// ✅ Allow nulls here
-	description: z.union([z.string(), z.null()]).optional(),
-	weight: z.union([z.string(), z.null()]).optional(),
-	length: z.union([z.string(), z.null()]).optional(),
+	description: z.string().optional(),
+	weight: z.string().optional(),
+	length: z.string().optional(),
 	weather: z
 	  .object({
-		temperature: z.number().nullable(),
-		precipitation: z.number().nullable(),
-		windspeed: z.number().nullable(),
-		weathercode: z.number().nullable(),
+		temperature: z.number().optional(),
+		precipitation: z.number().optional(),
+		windspeed: z.number().optional(),
+		weathercode: z.number().optional(),
 	  })
 	  .optional()
-	  .nullable(),
   });
   
   

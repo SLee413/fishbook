@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import 'leaflet/dist/leaflet.css';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
@@ -24,6 +25,12 @@ const CreatePost = () => {
   const mapRef = useRef(null);
   const markerRef = useRef(null);
   const [selectedLatLng, setSelectedLatLng] = useState(null);
+
+  const navigate = useNavigate();
+
+  if (!localStorage.getItem("token")) {
+    navigate('/login');
+  }
 
   useEffect(() => {
     if (!mapRef.current) {
@@ -104,11 +111,14 @@ const CreatePost = () => {
       moonPhase
     };
 
-    console.log("📤 Sending postData to /from-map:", postData);
+    console.log("📤 Sending postData to /posts:", postData);
 
-    const res = await fetch('/api/posts/from-map', {
+    const res = await fetch('/api/posts/', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization' : `Bearer ${localStorage.getItem("token")}` 
+      },
       body: JSON.stringify(postData)
     });
 
