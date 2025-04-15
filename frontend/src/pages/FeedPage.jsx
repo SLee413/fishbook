@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 
 const getWeatherIcon = (code) => {
   const icons = {
@@ -58,7 +59,12 @@ const FeedPage = () => {
               backgroundColor: '#f9f9f9',
             }}
           >
-            <p><strong>🎣 Angler:</strong> {post.authorName || "Unknown"}</p>
+            <p>
+              <strong>🎣 Angler:</strong>{' '}
+              <Link to={`/profile/${post.authorId}`}>
+                {post.authorName || "Unknown"}
+              </Link>
+            </p>
             <p><strong>🐟 Fish Type:</strong> {post.species || "Unknown Fish"}</p>
             <p><strong>📝 Description:</strong> {post.description || "No description"}</p>
             {post.bait && <p><strong>🪱 Bait:</strong> {post.bait}</p>}
@@ -80,7 +86,9 @@ const FeedPage = () => {
               </>
             )}
 
-            <p style={{ fontStyle: 'italic' }}>Posted on {new Date(post.datePosted).toLocaleString()}</p>
+            <p style={{ fontStyle: 'italic' }}>
+              Posted on {new Date(post.datePosted).toLocaleString()}
+            </p>
           </div>
         ))
       )}
