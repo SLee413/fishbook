@@ -13,6 +13,8 @@ import { Post, postSchema, User, Comment, userSchema } from '../schemas/index';
 import { Request, Response, Router } from 'express';
 import { AuthRequest } from './authentication';
 
+import cookieParser from 'cookie-parser';
+app.use(cookieParser());
 
 const jwt = require("jsonwebtoken");
 
@@ -20,40 +22,30 @@ const router = Router();
 
 /** 
  * Gets user data
- * 
- * @param userid The ID of the user
- * @return The User object for the particular user (minus password)
  */
-router.get('/:userid', async (req : AuthRequest, res : Response) => {
+router.get('/:userid', async (req: AuthRequest, res: Response) => {
 	try {
-		const database : Db = await getDatabase();
-		const usersCollection : Collection<User> = await database.collection("Users");
+		const database: Db = await getDatabase();
+		const usersCollection: Collection<User> = await database.collection("Users");
 
-		// Ensure userid is valid
 		if (!ObjectId.isValid(req.params.userid)) {
 			res.status(404).send("Invalid user");
 			return;
 		}
 
-		// Find the user
-		let user = await usersCollection.findOne({
-			_id : new ObjectId(req.params.userid)
-		});
+		let user = await usersCollection.findOne({ _id: new ObjectId(req.params.userid) });
 
 		if (user == null) {
 			res.status(404).send("Invalid user");
-			return
+			return;
 		}
 
-		// Don't send everyone this user's password
 		if (user.password) {
 			delete user["password"];
 		}
-		
 
 		res.send(user);
-	
-	// Log errors and return 500
+
 	} catch (error) {
 		console.error(error);
 		res.status(500).send("Internal error");
@@ -62,34 +54,18 @@ router.get('/:userid', async (req : AuthRequest, res : Response) => {
 
 /**
  * Creates a new user
- * 
- * @body A JSON object that contains:
- * 	- name -				String
- * 	- password - 			String
- * 	- bio -					String
- * 	- profilePictureURL - 	String
- * 	- email - 				String
- * 
- * @return {
- * 	userId - The new user's ID
- * 	token - The session token for the user
- * }
- * 
- * NOTE: If a username is taken, it will be a 400 status with the message "Username taken"
  */
-router.post('/create', async (req : AuthRequest, res : Response) => {
+router.post('/create', async (req: AuthRequest, res: Response) => {
 	try {
-		const database : Db = await getDatabase();
-		const usersCollection : Collection<User> = await database.collection("Users");
+		const database: Db = await getDatabase();
+		const usersCollection: Collection<User> = await database.collection("Users");
 
-		// Get a new user started
-		let newUser : User = {
-			createdAt : new Date(),
-			lastLoginAt : new Date(),
-			totalPosts : 0
+		let newUser: User = {
+			createdAt: new Date(),
+			lastLoginAt: new Date(),
+			totalPosts: 0
 		}
 
-		// Transfer properties from body to post
 		for (let property in req.body) {
 			if (!newUser[property]) {
 				newUser[property] = req.body[property];
@@ -97,94 +73,117 @@ router.post('/create', async (req : AuthRequest, res : Response) => {
 		}
 		let result = userSchema.safeParse(newUser);
 
-		// Validate user
 		if (!result.success) {
 			res.status(400).send('Invalid user');
 			return;
 		}
 
-		// Ensure username isn't taken
 		let otherUser = await usersCollection.findOne({
-			name : newUser.name
+			name: newUser.name
 		});
 		if (otherUser) {
 			res.status(400).send('Username taken');
 			return;
 		}
 
-		// Add user to collection
-		let userData : User = result.data;
+		let userData: User = result.data;
 		let sysUser = await usersCollection.insertOne(userData);
 
 		if (!sysUser.insertedId) {
-			res.sendStatus(500); 
+			res.sendStatus(500);
 			return;
 		}
 
-		// Generate token
 		let token = jwt.sign({
-			userId : sysUser.insertedId
+			userId: sysUser.insertedId
 		}, process.env.JWT_SECRET);
 
 		res.status(201).send({
-			userId : sysUser.insertedId,
-			token : token
+			userId: sysUser.insertedId,
+			token: token
 		});
 
-	// Log errors and return 500
 	} catch (error) {
 		console.error(error);
 		res.status(500).send("Internal error");
 	}
 });
-  
+
 /**
  * Logs a user in given valid credentials
- * 
- * @body A JSON object that contains:
- * 	- name - 		String
- *  - password -	String
- * 
- * @return {
- * 	token - Session token for the user
- * }
- * NOTE: Invalid credentials will be met with a 400 status error 
- * with the message "Invalid credentials"
  */
-router.post('/login', async (req : AuthRequest, res : Response) => {
-	try {
-		const database : Db = await getDatabase();
-		const usersCollection : Collection<User> = await database.collection("Users");
+router.post('/login', async (req: AuthRequest, res: Response) => {
+  try {
+    const database: Db = await getDatabase();
+    const usersCollection: Collection<User> = await database.collection("Users");
 
-		// Ensure the request contains a name and password
-		if (!req.body.name || !req.body.password) {
-			res.status(400).send("Invalid credentials");
+    if (!req.body.name || !req.body.password) {
+      res.status(400).send("Invalid credentials");
+      return;
+    }
+
+    let user = await usersCollection.findOne({
+      name: req.body.name,
+      password: req.body.password
+    });
+
+    if (user == null) {
+      res.status(400).send("Invalid credentials");
+      return;
+    }
+
+    user.lastLoginAt = new Date();
+
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET);
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: "strict",
+      maxAge: 1000 * 60 * 60 * 24 * 7 // 7 days
+    });
+
+    res.send({ token }); // or just a success flag
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Internal error");
+  }
+});
+
+/**
+ * Updates user info
+ */
+router.put('/:userid', async (req: AuthRequest, res: Response) => {
+	try {
+		const database: Db = await getDatabase();
+		const usersCollection: Collection<User> = await database.collection("Users");
+
+		const userId = req.params.userid;
+
+		if (!ObjectId.isValid(userId)) {
+			res.status(400).send("Invalid user ID");
 			return;
 		}
 
-		// Right now we just query the database for a user with that name and password - not very safe but works
-		let user = await usersCollection.findOne({
-			name : req.body.name,
-			password : req.body.password
-		});
-		if (user == null) {
-			res.status(400).send("Invalid credentials");
-			return
+		const updateFields: Partial<User> = {};
+		if (req.body.bio) updateFields.bio = req.body.bio;
+		if (req.body.profilePicture) updateFields.profilePic = req.body.profilePicture;
+		if (req.body.name) updateFields.name = req.body.name;
+		if (req.body.email) updateFields.email = req.body.email;
+
+		const result = await usersCollection.findOneAndUpdate(
+			{ _id: new ObjectId(userId) },
+			{ $set: updateFields },
+			{ returnDocument: 'after' }
+		);
+
+		if (!result.value) {
+			res.status(404).send("User not found");
+			return;
 		}
 
-		// Set the last login time
-		user.lastLoginAt = new Date();
+		res.send(result.value);
 
-		// Generate token
-		let token = jwt.sign({
-			userId : user._id
-		}, process.env.JWT_SECRET);
-
-		res.send({
-			token: token
-		});
-
-	// Log errors and return 500
 	} catch (error) {
 		console.error(error);
 		res.status(500).send("Internal error");
