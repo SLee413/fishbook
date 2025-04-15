@@ -57,8 +57,8 @@ router.get('/', auth, async (req : AuthRequest, res : Response) => {
 		}
 
 		let posts = await postsCollection.find(filters)
-			.sort({ datePosted: -1 }) // Sort in ascending order by datePosted
-			.limit(10) // Limit the result to 10 documents
+			.sort({ createdAt: 1 }) // Sort in ascending order by createdAt
+			//.limit(10) // Limit the result to 5 documents
 			.toArray(); // Convert the result to an array
 
 		// If there's an authenticated user, return whether or not they liked each post
@@ -459,6 +459,8 @@ router.post('/:postid/comments', auth, async (req : AuthRequest, res : Response)
 		res.status(500).send("Internal error");
 	}
 });
+
+// TODO: Likes
 
 // Accepts a new post from the map app (no auth for now, adjust if needed)
 // posts.ts (already inside your router file)
