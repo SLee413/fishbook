@@ -1,0 +1,98 @@
+.account-page {
+    font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
+    color: #1e3a8a;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #fff;
+    min-height: 100vh;
+    padding: 20px;
+  }
+  
+  .account-container {
+    max-width: 550px;
+    width: 100%;
+    padding: 20px;
+    text-align: center;
+  }
+  
+  .account-title {
+    font-size: 2rem;
+    margin-bottom: 20px;
+  }
+  
+  .account-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .profile-picture {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 20px;
+  }
+  
+  .account-edit-form {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+  }
+  
+  .account-label {
+    font-size: 1rem;
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+  
+  .account-input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1rem;
+    box-sizing: border-box;
+    height: 40px;
+    outline: none;
+    color: #000000;
+  }
+  
+  .account-input:focus {
+    border-color: #1e3a8a;
+  }
+  
+  .button-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+  }
+  
+  .account-button {
+    flex: 1;
+    background-color: #1e3a8a;
+    color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 1rem;
+  }
+  
+  .account-button:hover {
+    background-color: #16317a;
+  }
+  
+  .logout-button {
+    background-color: #dc3545;
+  }
+  
+  .logout-button:hover {
+    background-color: #b02a37;
+  }
+  

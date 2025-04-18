@@ -2,9 +2,6 @@
  * @file Controls authentication
  * @description 
  * This is an ExpressJS middleware function that authenticates the user
- * 
- * @author Spencer Lee
- * 
  */
 
 import { Collection, Db, ObjectId } from 'mongodb';
@@ -15,46 +12,38 @@ import { Request, Response, NextFunction } from 'express';
 const jwt = require("jsonwebtoken");
 
 export interface AuthRequest extends Request {
-	user? : User
+  user?: any;
+  file?: any; // ✅ NO MULTER IMPORT, just any
 }
 
 /**
  * Adds an authenticated user to the request
- * 
- * In order to qualify as authenticated, a valid token must
- * be passed via the Authorization header. The user will be
- * available via request.user. If the token is not valid, 
- * then request.user will be null.
  */
-module.exports = async (request : AuthRequest, response : Response, next : NextFunction) => {
+module.exports = async (request: AuthRequest, response: Response, next: NextFunction) => {
   try {
-	// Get the authorization token from the headers
-	const token = await request.headers.authorization.split(" ")[1];
+    const token = request.headers.authorization?.split(" ")[1];
+    if (!token) {
+      request.user = null;
+      return next();
+    }
 
-	// Verify the token
-	const decodedToken = await jwt.verify(token, process.env.JWT_SECRET);
+    const decodedToken = await jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decodedToken.userId;
 
-	// Retrieve the user details of the logged in user
-	const userId = decodedToken.userId;
+    const database: Db = await getDatabase();
+    const usersCollection: Collection<User> = database.collection("Users");
 
-	// Ensure user is a valid user
-	const database : Db = await getDatabase();
-	const usersCollection : Collection<User> = await database.collection("Users");
+    const userDoc = await usersCollection.findOne({ _id: new ObjectId(userId) });
+    if (!userDoc) {
+      request.user = null;
+      return next();
+    }
 
-	let userDoc = await usersCollection.findOne({
-		_id : new ObjectId(userId)
-	});
-	if (userDoc == null) next();
-
-	// pass the user down to the endpoints here
-	request.user = userDoc;
-
-	// pass down functionality to the endpoint
-	next();
+    request.user = userDoc;
+    next();
 
   } catch (error) {
-	// Ensure that there is no user field in the request
-	request.user = null;
-	next();
+    request.user = null;
+    next();
   }
 };

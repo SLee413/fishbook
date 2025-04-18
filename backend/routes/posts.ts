@@ -9,99 +9,71 @@
 
 import { Collection, Db, ObjectId } from 'mongodb';
 import { getDatabase } from '../clients/mongoclient';
-import { Post, likedPost, postSchema, User, Comment, commentSchema, Like, likeSchema } from '../schemas/index';
+import { Post, postSchema, User, Comment } from '../schemas/index';
 import { Request, Response, Router } from 'express';
 import { AuthRequest } from './authentication';
 
-const router = Router();
 const auth = require('./authentication');
+const router = Router();
 
 /**
  * Gets a list of posts
- * 
- * @query filterWaterType String - Filters posts by specific water type
- * @query lastPost PostId - Will return the next posts after a given postId
- * @query user UserId - Will return posts by a specific user
- * 
- * IF you supply an authenticated user, each post will have a liked field
- * 
- * @return {
- * 	posts - Array of posts
- * }
  */
-router.get('/', auth, async (req : AuthRequest, res : Response) => {
+router.get('/', auth, async (req: AuthRequest, res: Response) => {
 	try {
-		const database : Db = await getDatabase();
-		const postsCollection : Collection<Post> = await database.collection("Posts");
-		const likesCollection : Collection<Like> = await database.collection("Likes");
+		const database: Db = await getDatabase();
+		const postsCollection: Collection<Post> = database.collection("Posts");
+		const likesCollection: Collection<any> = database.collection("Likes");
 
-
-		let filters = {}
+		let filters: any = {};
 
 		// Filter by water type
 		let waterType = req.query["filterWaterType"];
 		if (waterType) {
-			filters["waterType"] = waterType
+			filters["waterType"] = waterType;
 		}
 
 		// Only query posts made before the given post
 		let lastPost = req.query["lastPost"];
 		if (typeof lastPost === 'string' && ObjectId.isValid(lastPost)) {
-			filters["_id"] = {$lt : new ObjectId(lastPost)}
+			filters["_id"] = { $lt: new ObjectId(lastPost) };
 		}
 
 		// Only query posts made by a specific user
 		let user = req.query["user"];
 		if (typeof user === 'string' && ObjectId.isValid(user)) {
-			filters["authorId"] = new ObjectId(user)
+			filters["authorId"] = new ObjectId(user);
 		}
 
 		let posts = await postsCollection.find(filters)
-			.sort({ createdAt: 1 }) // Sort in ascending order by createdAt
-			//.limit(10) // Limit the result to 5 documents
-			.toArray(); // Convert the result to an array
+			.sort({ createdAt: 1 })
+			.toArray();
 
 		// If there's an authenticated user, return whether or not they liked each post
 		if (req.user) {
-			// Query likes the author made for posts in the previous list
 			let likes = await likesCollection.find({
-				authorId : req.user._id,
-				postId : {
-					"$in" : posts.map((p : Post) => p._id)
+				authorId: req.user._id,
+				postId: {
+					"$in": posts.map((p: Post) => p._id)
 				}
 			}).toArray();
-			// Map it to a simpler array to make it easier - we convert ids to strings for easier comparison
-			let likedPostIds = likes.map((l : Like) => l.postId.toString());
 
-			let postsWithLikes : [likedPost?] = [];
+			let likedPostIds = likes.map((l: any) => l.postId.toString());
 
-			// Iterate through each post to see if there's a like object
-			posts.forEach((post : Post) => {
-				// Create a new liked post object
-				let newPost = post as likedPost;
-				newPost.liked = false;
+			let postsWithLikes: any[] = [];
 
-				// Set it to liked if it's liked
-				if (likedPostIds.includes(post._id.toString())) {
-					newPost.liked = true;
-				}
-
-				// Add to array
+			posts.forEach((post: Post) => {
+				let newPost = post as any;
+				newPost.liked = likedPostIds.includes(post._id.toString());
 				postsWithLikes.push(newPost);
 			});
 
-			// Send posts with likes
-			res.send({
-				posts : postsWithLikes
-			});
-
+			res.send({ posts: postsWithLikes });
 			return;
 		}
 
-		res.send({
-			posts : posts
-		});
-	// Log errors and return 500
+		res.send({ posts: posts });
+
 	} catch (error) {
 		console.error(error);
 		res.status(500).send("Internal error");
@@ -110,44 +82,34 @@ router.get('/', auth, async (req : AuthRequest, res : Response) => {
 
 /**
  * Gets a specific post by ID
- * 
- * IF you supply an authenticated user, the post will have a liked field
- * 
- * @return post - the post object
-*/
-router.get('/:postid', auth, async (req : AuthRequest, res : Response) => {
-   try {
-	   const database : Db = await getDatabase();
-	   const postsCollection : Collection<Post> = await database.collection("Posts");
-	   const likesCollection : Collection<Like> = await database.collection("Likes");
+ */
+router.get('/:postid', auth, async (req: AuthRequest, res: Response) => {
+	try {
+		const database: Db = await getDatabase();
+		const postsCollection: Collection<Post> = database.collection("Posts");
+		const likesCollection: Collection<any> = database.collection("Likes");
 
-		// Ensure postid is valid
 		if (!ObjectId.isValid(req.params.postid)) {
 			res.status(404).send("Invalid post");
 			return;
 		}
 
-		// Ensure post exists
 		let post = await postsCollection.findOne({
-			_id : new ObjectId(req.params.postid)
+			_id: new ObjectId(req.params.postid)
 		});
 		if (post == null) {
 			res.status(404).send("Invalid post");
 			return;
 		}
 
-		// If there's an authenticated user, check its like status
 		if (req.user != null) {
-			// Initialize post as not liked
-			let newPost = post as likedPost;
+			let newPost = post as any;
 			newPost.liked = false;
 
-			// Query the like collection
 			let likeDocument = await likesCollection.findOne({
-				authorId : req.user._id,
-				postId : post._id
+				authorId: req.user._id,
+				postId: post._id
 			});
-			// If the user liked it, set to true
 			if (likeDocument != null) {
 				newPost.liked = true;
 			}
@@ -158,60 +120,39 @@ router.get('/:postid', auth, async (req : AuthRequest, res : Response) => {
 
 		res.send(post);
 
-   // Log errors and return 500
-   } catch (error) {
-	   console.error(error);
-	   res.status(500).send("Internal error");
-   }
+	} catch (error) {
+		console.error(error);
+		res.status(500).send("Internal error");
+	}
 });
 
 /**
  * Creates a new post
- * 
- * @requires authentication
- * 
- * @body A JSON object that contains:
- * 	- imageURL	-	String
- * 	- dateCaught-	Date (can be string)
- * 	- location -	JSON object that contains
- * 		- lat -		Number
- * 		- lng -		Number
- * 	- species -		String (optional)
- * 	- bait -		String (optional)
- * 	- waterType -	String (optional)
- * 
- * @return {
- * 	postId - ID of the new post
- * }
  */
-router.post('/', auth, async (req : AuthRequest, res : Response) => {
-	// Ensure user is authenticated
+router.post('/', auth, async (req: AuthRequest, res: Response) => {
 	if (!req.user) {
 		res.status(401).send("Unauthorized");
 		return;
 	}
 
 	try {
-		const database : Db = await getDatabase();
-		const postsCollection : Collection<Post> = await database.collection("Posts");
-		const usersCollection : Collection<User> = await database.collection("Users");
+		const database: Db = await getDatabase();
+		const postsCollection: Collection<Post> = database.collection("Posts");
+		const usersCollection: Collection<User> = database.collection("Users");
 
-		let user : User = req.user;
+		let user: User = req.user;
 
-		// basic info for new posts
-		let newPost : Post = {
-			authorId : user._id,
-			authorName : user.name,
-			authorProfilePicture : user.profilePictureUrl,
-			datePosted : new Date(),
-			likes : 0
-		}
+		let newPost: Post = {
+			authorId: user._id,
+			authorName: user.name, 
+			authorProfilePicture: user.profilePictureUrl,
+			datePosted: new Date(),
+			likes: 0
+		};
 
-		// Transfer properties from body to post
 		for (let property in req.body) {
 			if (!newPost[property]) {
-				// If it's the dateCaught, we turn it into a Date object
-				if (property == "dateCaught") {
+				if (property === "dateCaught") {
 					newPost[property] = new Date(req.body[property]);
 				} else {
 					newPost[property] = req.body[property];
@@ -221,244 +162,190 @@ router.post('/', auth, async (req : AuthRequest, res : Response) => {
 
 		let result = postSchema.safeParse(newPost);
 
-		// Validate post
 		if (!result.success) {
 			res.status(400).send('Invalid post structure');
 			return;
 		}
 
-		let postData : Post = result.data;
+		let postData: Post = result.data;
 		let postInsertion = await postsCollection.insertOne(postData);
 
-		// Add 1 to the user's total post count
 		if (postInsertion.acknowledged) {
-			usersCollection.updateOne({"_id" : user._id}, {
-				$inc: { 'totalPosts': 1 },
-			});
-			
+			usersCollection.updateOne(
+				{ "_id": user._id },
+				{ $inc: { 'totalPosts': 1 } }
+			);
 		}
 
-		res.status(201).send({
-			postId : postInsertion.insertedId
-		});
+		res.status(201).send({ postId: postInsertion.insertedId });
 
-	// Log errors and return 500
 	} catch (error) {
 		console.error(error);
 		res.status(500).send("Internal error");
 	}
 });
 
-/** 
- * Gets a list of comments on a given post
- * 
- * @param postid The ID of the post
- * 
- * @query lastComment - CommentId - Will return comments after a specific commentId
- * 
- * @return {
- * 	comments - Array of comments
- * }
+/**
+ * Gets comments for a post
  */
-router.get('/:postid/comments', async (req : Request, res : Response) => {
+router.get('/:postid/comments', async (req: Request, res: Response) => {
 	try {
-		const database : Db = await getDatabase();
-		const commentsCollection : Collection<Comment> = await database.collection("Comments");
+		const database: Db = await getDatabase();
+		const commentsCollection: Collection<Comment> = database.collection("Comments");
 
-		// Ensure postid is valid
 		if (!ObjectId.isValid(req.params.postid)) {
 			res.status(404).send("Invalid post");
 			return;
 		}
 
-		let filters = {
-			postId : new ObjectId(req.params.postid)
-		}
+		let filters: any = {
+			postId: new ObjectId(req.params.postid)
+		};
 
-		// Only query comments  made before the given comment
 		let lastComment = req.query["lastComment"];
 		if (typeof lastComment === 'string' && ObjectId.isValid(lastComment)) {
-			filters["_id"] = {$lt : new ObjectId(lastComment)}
+			filters["_id"] = { $lt: new ObjectId(lastComment) };
 		}
 
-		// Query comments
 		let comments = await commentsCollection.find(filters)
-			.sort({ createdAt: 1 }) // Sort in ascending order by createdAt
-			.limit(10) // Limit the result to 5 documents
-			.toArray(); // Convert the result to an array
+			.sort({ createdAt: 1 })
+			.limit(10)
+			.toArray();
 
-		res.send({
-			comments: comments
-		});
+		res.send({ comments: comments });
 
-	// Log errors and return 500
 	} catch (error) {
 		console.error(error);
 		res.status(500).send("Internal error");
 	}
 });
 
-/** 
+/**
  * Creates a comment on a post
- * @requires authentication
- * 
- * @param postid The ID of the post
- * 
- * @body A JSON object that contains:
- *	- comment - 	String
- * 
- * @return {
- * 	commentId - The ID of the new comment
- * }
  */
-router.post('/:postid/comments', auth, async (req : AuthRequest, res : Response) => {
-	// Ensure user is authenticated
+router.post('/:postid/comments', auth, async (req: AuthRequest, res: Response) => {
 	if (!req.user) {
 		res.status(401).send("Unauthorized");
 		return;
 	}
 
 	try {
-		const database : Db = await getDatabase();
-		const postsCollection : Collection<Post> = await database.collection("Posts");
-		const commentsCollection : Collection<Comment> = await database.collection("Comments");
-	
-		// Ensure postid is valid
+		const database: Db = await getDatabase();
+		const postsCollection: Collection<Post> = database.collection("Posts");
+		const commentsCollection: Collection<Comment> = database.collection("Comments");
+
 		if (!ObjectId.isValid(req.params.postid)) {
 			res.status(404).send("Invalid post");
 			return;
 		}
-	
-		// Ensure post exists
+
 		let post = await postsCollection.findOne({
-			_id : new ObjectId(req.params.postid)
+			_id: new ObjectId(req.params.postid)
 		});
 		if (post == null) {
 			res.status(404).send("Invalid post");
 			return;
 		}
-	
-		// Create a new comment object
-		let newComment : Comment = {
-			postId : post._id,
-			datePosted : new Date(),
-			authorId : req.user._id,
-			authorName : req.user.name,
-			authorProfilePicture : req.user.profilePictureUrl
-		}
-	
-		// Transfer properties from body to comment
+
+		let newComment: Comment = {
+			postId: post._id,
+			datePosted: new Date(),
+			authorId: req.user._id,
+			authorName: req.user.username, // 🔥 FIXED: use username
+			authorProfilePicture: req.user.profilePictureUrl
+		};
+
 		for (let property in req.body) {
 			if (!newComment[property]) {
 				newComment[property] = req.body[property];
 			}
 		}
-		let result = commentSchema.safeParse(newComment);
-	
-		// Validate user
+
+		let result = postSchema.safeParse(newComment);
+
 		if (!result.success) {
 			res.status(400).send('Invalid comment');
 			return;
 		}
-	
-		let commentData : Comment = result.data;
-			
+
+		let commentData: Comment = result.data;
 		let commentInsertion = await commentsCollection.insertOne(commentData);
-	
-		res.status(201).send({
-			commendId : commentInsertion.insertedId
-		});
-	
-	// Log errors and return 500
+
+		res.status(201).send({ commentId: commentInsertion.insertedId });
+
 	} catch (error) {
 		console.error(error);
 		res.status(500).send("Internal error");
 	}
 });
 
-/** 
- * Adds or removes a like on a post
- * @requires authentication
- * 
- * @param postid The ID of the post
- * 
- * @return {
- * 	likes - the number of likes on the post,
- * 	liked - whether the user currently has liked the post
- * }
+/**
+ * Likes or unlikes a post
  */
- router.post('/:postid/like', auth, async (req : AuthRequest, res : Response) => {
-	// Ensure user is authenticated
+router.post('/:postid/like', auth, async (req: AuthRequest, res: Response) => {
 	if (!req.user) {
 		res.status(401).send("Unauthorized");
 		return;
 	}
 
 	try {
-		const database : Db = await getDatabase();
-		const postsCollection : Collection<Post> = await database.collection("Posts");
-		const likesCollection : Collection<Like> = await database.collection("Likes");
-	
-		// Ensure postid is valid
+		const database: Db = await getDatabase();
+		const postsCollection: Collection<Post> = database.collection("Posts");
+		const likesCollection: Collection<any> = database.collection("Likes");
+
 		if (!ObjectId.isValid(req.params.postid)) {
 			res.status(404).send("Invalid post");
 			return;
 		}
-	
-		// Ensure post exists
+
 		let post = await postsCollection.findOne({
-			_id : new ObjectId(req.params.postid)
+			_id: new ObjectId(req.params.postid)
 		});
 		if (post == null) {
 			res.status(404).send("Invalid post");
 			return;
 		}
-	
-		// Check if a like object exists
+
 		let likeDocument = await likesCollection.findOne({
-			postId : post._id,
-			authorId : req.user._id
+			postId: post._id,
+			authorId: req.user._id
 		});
 
-		// Like does not exist, create it
-		if (likeDocument == null) {
-			// Create the like document
-			likesCollection.insertOne({
-				authorId : req.user._id,
-				postId : post._id
+		if (!likeDocument) {
+			await likesCollection.insertOne({
+				authorId: req.user._id,
+				postId: post._id
 			});
 
-			// Update the post's likes
-			let updateResult = await postsCollection.findOneAndUpdate({"_id" : post._id}, {
-				$inc : {'likes' : 1}
-			}, { returnDocument : "after" });
+			let updateResult = await postsCollection.findOneAndUpdate(
+				{ "_id": post._id },
+				{ $inc: { 'likes': 1 } },
+				{ returnDocument: "after" }
+			);
 
 			res.send({
-				likes : updateResult.likes,
-				liked : true
+				likes: updateResult?.likes || 0,
+				liked: true
 			});
-			return;
 		} else {
-			// Like does exist, delete it and decrement post counter
-			likesCollection.findOneAndDelete({"_id" : likeDocument._id});
+			await likesCollection.findOneAndDelete({ "_id": likeDocument._id });
 
-			let updateResult = await postsCollection.findOneAndUpdate({"_id" : post._id}, {
-				$inc : {'likes' : -1}
-			}, { returnDocument : "after" });
+			let updateResult = await postsCollection.findOneAndUpdate(
+				{ "_id": post._id },
+				{ $inc: { 'likes': -1 } },
+				{ returnDocument: "after" }
+			);
 
 			res.send({
-				likes : updateResult.likes,
-				liked : false
+				likes: updateResult?.likes || 0,
+				liked: false
 			});
-			return;
 		}
-	
-	// Log errors and return 500
+
 	} catch (error) {
 		console.error(error);
 		res.status(500).send("Internal error");
 	}
 });
-
 
 export const postsRouter = router;

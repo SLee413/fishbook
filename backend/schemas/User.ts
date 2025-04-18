@@ -3,7 +3,7 @@ import { z } from "zod";
 
 /**
  * @file Defines a user object
- * @decription
+ * @description
  * Defines what fields users will have
  * 
  * @author Spencer Lee
@@ -12,17 +12,17 @@ import { z } from "zod";
  */
 
 export const userSchema = z.object({
-	_id : z.instanceof(ObjectId).optional(),
-	name : z.string(),
-	password : z.string(),
-	bio : z.string(),
-	profilePictureUrl : z.string(),
-	email : z.string(),
-
-
-	totalPosts : z.number(),
-	lastLoginAt : z.date(),
-	createdAt: z.date()
+  _id: z.instanceof(ObjectId).optional(),
+  name: z.string(),               // username
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+  password: z.string(),
+  bio: z.string(),
+  profilePictureUrl: z.string().optional(),
+  email: z.string(),
+  totalPosts: z.number(),
+  lastLoginAt: z.date(),
+  createdAt: z.date()
 });
 
 export type User = z.infer<typeof userSchema>;
