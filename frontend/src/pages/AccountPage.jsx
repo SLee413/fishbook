@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import styles from '../css/CreateAccountPage.module.css';
+import styles from '../css/AccountPage.module.css';
 
 const AccountPage = ({ user, handleLogout, onUserUpdate }) => {
   const navigate = useNavigate();
@@ -14,7 +14,6 @@ const AccountPage = ({ user, handleLogout, onUserUpdate }) => {
   });
   const [selectedFile, setSelectedFile] = useState(null);
 
-  // When user prop updates (e.g., after save or login), refresh form data
   useEffect(() => {
     if (user) {
       setEditData({
@@ -49,7 +48,6 @@ const AccountPage = ({ user, handleLogout, onUserUpdate }) => {
   const handleSave = async (e) => {
     e.preventDefault();
     try {
-      // Prepare form data for profile update
       const formData = new FormData();
       formData.append('username', editData.username);
       formData.append('firstName', editData.firstName);
@@ -67,7 +65,6 @@ const AccountPage = ({ user, handleLogout, onUserUpdate }) => {
       });
       if (res.ok) {
         const updatedUser = await res.json();
-        // Update global user state with new values
         onUserUpdate && onUserUpdate({
           username: updatedUser.name,
           email: updatedUser.email,
@@ -93,127 +90,114 @@ const AccountPage = ({ user, handleLogout, onUserUpdate }) => {
   };
 
   return (
-    <main className={styles['create-account-page']}>
-      <div className={styles['create-account-container']}>
-        <h2 className={styles['create-account-title']}>Account</h2>
+    <main className={styles['account-page']}>
+      <div className={styles['account-container']}>
+        <h2 className={styles['account-title']}>My Account</h2>
+
         {user ? (
           editMode ? (
-            /* -------- EDIT MODE -------- */
-            <div style={{ marginTop: '20px', textAlign: 'left' }}>
-              {/* Profile Picture (current) */}
-              {user.profilePictureUrl && (
-                <img 
-                  src={user.profilePictureUrl} 
-                  alt="Profile" 
-                  style={{ width: '100px', borderRadius: '50%' }} 
+            /* ----------- EDIT MODE ----------- */
+            <form className={styles['account-info']} onSubmit={handleSave}>
+              <div className={styles['edit-field-group']}>
+                <label className={styles['edit-label']}>First Name</label>
+                <input
+                  className={styles['account-field']}
+                  name="firstName"
+                  value={editData.firstName}
+                  onChange={handleChangeEdit}
+                  required
                 />
-              )}
-              <p><strong>Member Since:</strong> {user.memberSince}</p>
-              <form className={styles['create-account-form']} onSubmit={handleSave}>
-                <label className={styles['create-account-label']}>First Name</label>
-                <input 
-                  name="firstName" 
-                  value={editData.firstName} 
-                  onChange={handleChangeEdit} 
-                  className={styles['create-account-input']} 
-                />
+              </div>
 
-                <label className={styles['create-account-label']}>Last Name</label>
-                <input 
-                  name="lastName" 
-                  value={editData.lastName} 
-                  onChange={handleChangeEdit} 
-                  className={styles['create-account-input']} 
+              <div className={styles['edit-field-group']}>
+                <label className={styles['edit-label']}>Last Name</label>
+                <input
+                  className={styles['account-field']}
+                  name="lastName"
+                  value={editData.lastName}
+                  onChange={handleChangeEdit}
+                  required
                 />
+              </div>
 
-                <label className={styles['create-account-label']}>Username</label>
-                <input 
-                  name="username" 
-                  value={editData.username} 
-                  onChange={handleChangeEdit} 
-                  className={styles['create-account-input']} 
-                  required 
+              <div className={styles['edit-field-group']}>
+                <label className={styles['edit-label']}>Username</label>
+                <input
+                  className={styles['account-field']}
+                  name="username"
+                  value={editData.username}
+                  onChange={handleChangeEdit}
+                  required
                 />
+              </div>
 
-                <label className={styles['create-account-label']}>Email</label>
-                <input 
-                  name="email" 
-                  type="email" 
-                  value={editData.email} 
-                  onChange={handleChangeEdit} 
-                  className={styles['create-account-input']} 
-                  required 
+              <div className={styles['edit-field-group']}>
+                <label className={styles['edit-label']}>Email</label>
+                <input
+                  className={styles['account-field']}
+                  name="email"
+                  type="email"
+                  value={editData.email}
+                  onChange={handleChangeEdit}
+                  required
                 />
+              </div>
 
-                <label className={styles['create-account-label']}>Bio</label>
-                <textarea 
-                  name="bio" 
-                  value={editData.bio} 
-                  onChange={handleChangeEdit} 
-                  rows="4" 
-                  style={{ 
-                    width: '100%', padding: '10px', marginBottom: '15px',
-                    border: '1px solid #ccc', borderRadius: '5px', fontSize: '1rem' 
-                  }} 
+              <div className={styles['edit-field-group']}>
+                <label className={styles['edit-label']}>Bio</label>
+                <textarea
+                  className={styles['account-field']}
+                  name="bio"
+                  value={editData.bio}
+                  onChange={handleChangeEdit}
+                  rows="3"
                 />
+              </div>
 
-                <label className={styles['create-account-label']}>Profile Picture</label>
-                <input 
-                  type="file" 
-                  onChange={handleFileChange} 
-                  className={styles['create-account-input']} 
+              <div className={styles['edit-field-group']}>
+                <label className={styles['edit-label']}>Profile Picture</label>
+                <input
+                  type="file"
+                  onChange={handleFileChange}
+                  className={styles['account-field']}
                 />
+              </div>
 
-                {/* Save/Cancel buttons */}
-                <div style={{ marginTop: '15px' }}>
-                  <button 
-                    type="submit" 
-                    className={styles['create-account-button']} 
-                    style={{ width: 'auto', marginRight: '10px' }}
-                  >
-                    Save Changes
-                  </button>
-                  <button 
-                    type="button" 
-                    onClick={() => setEditMode(false)} 
-                    className={styles['create-account-button']} 
-                    style={{ width: 'auto', backgroundColor: '#6b7280' }}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            </div>
+              <div className={styles['account-buttons']}>
+                <button type="submit" className={styles['edit-button']}>Save Changes</button>
+                <button
+                  type="button"
+                  className={styles['logout-button']}
+                  onClick={() => setEditMode(false)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
           ) : (
-            /* -------- VIEW MODE -------- */
-            <div style={{ marginTop: '20px', textAlign: 'left' }}>
-              {user.profilePictureUrl && (
-                <img 
-                  src={user.profilePictureUrl} 
-                  alt="Profile" 
-                  style={{ width: '100px', borderRadius: '50%' }} 
-                />
-              )}
-              <p><strong>Username:</strong> {user.username}</p>
-              <p><strong>First Name:</strong> {user.firstName || 'N/A'}</p>
-              <p><strong>Last Name:</strong> {user.lastName || 'N/A'}</p>
-              <p><strong>Email:</strong> {user.email}</p>
-              <p><strong>Bio:</strong> {user.bio ? user.bio : 'N/A'}</p>
-              <p><strong>Member Since:</strong> {user.memberSince}</p>
-              <button 
-                className={styles['create-account-button']} 
-                style={{ width: 'auto', marginRight: '10px' }} 
-                onClick={() => setEditMode(true)}
-              >
-                Edit Profile
-              </button>
-              <button 
-                className={styles['create-account-button']} 
-                style={{ width: 'auto', backgroundColor: '#6b7280' }} 
-                onClick={onLogoutClick}
-              >
-                Logout
-              </button>
+            /* ----------- VIEW MODE ----------- */
+            <div className={styles['account-info']}>
+              <div className={styles['account-field']}><strong>Username:</strong> {user.username}</div>
+              <div className={styles['account-field']}><strong>First Name:</strong> {user.firstName || 'N/A'}</div>
+              <div className={styles['account-field']}><strong>Last Name:</strong> {user.lastName || 'N/A'}</div>
+              <div className={styles['account-field']}><strong>Email:</strong> {user.email}</div>
+              <div className={styles['account-field']}><strong>Bio:</strong> {user.bio || 'N/A'}</div>
+              <div className={styles['account-field']}><strong>Member Since:</strong> {user.memberSince}</div>
+
+              <div className={styles['account-buttons']}>
+                <button
+                  className={styles['edit-button']}
+                  onClick={() => setEditMode(true)}
+                >
+                  Edit Profile
+                </button>
+                <button
+                  className={styles['logout-button']}
+                  onClick={onLogoutClick}
+                >
+                  Logout
+                </button>
+              </div>
             </div>
           )
         ) : (
