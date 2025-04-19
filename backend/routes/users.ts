@@ -114,13 +114,17 @@ router.post('/update', auth, upload.single('profilePicture'), async (req: AuthRe
       }
     }
 
-    const result = await usersCollection.findOneAndUpdate(
+    const result = await usersCollection.updateOne(
       { _id: req.user._id },
-      { $set: replacements },
-      { returnDocument: 'after' }
-    ) as any; // <- fix for typescript squiggle
+      { $set: replacements }
+    );
 
-    const updatedUser = result?.value;
+    if (result.modifiedCount === 0) {
+      res.status(404).send("User not found");
+      return;
+    }
+
+    const updatedUser = await usersCollection.findOne({ _id: req.user._id });
 
     if (!updatedUser) {
       res.status(404).send("User not found");
@@ -165,7 +169,7 @@ router.post('/create', async (req: AuthRequest, res: Response) => {
       totalPosts: 0,
       createdAt: new Date(),
       lastLoginAt: new Date(),
-      profilePictureUrl: '/profileImages/default.png' // <- always on new account
+      profilePictureUrl: '/profileImages/default.png'
     };
 
     const result = userSchema.safeParse(newUser);
