@@ -94,7 +94,7 @@ router.post('/update', auth, upload.single('profilePicture'), async (req: AuthRe
       delete req.body.username;
     }
 
-    const EditableFields = ["name", "firstName", "lastName", "bio", "email", "profilePictureUrl"];
+    const EditableFields = ["name", "firstName", "lastName", "bio", "email", "password"];
     let replacements: any = {};
 
     for (let property in req.body) {
@@ -118,9 +118,9 @@ router.post('/update', auth, upload.single('profilePicture'), async (req: AuthRe
       { _id: req.user._id },
       { $set: replacements },
       { returnDocument: 'after' }
-    );
+    ) as any; // <- fix for typescript squiggle
 
-    const updatedUser = result;
+    const updatedUser = result?.value;
 
     if (!updatedUser) {
       res.status(404).send("User not found");
@@ -131,7 +131,15 @@ router.post('/update', auth, upload.single('profilePicture'), async (req: AuthRe
       delete updatedUser.password;
     }
 
-    res.send(updatedUser);
+    res.send({
+      name: updatedUser.name,
+      email: updatedUser.email,
+      firstName: updatedUser.firstName,
+      lastName: updatedUser.lastName,
+      bio: updatedUser.bio,
+      profilePictureUrl: updatedUser.profilePictureUrl || '/profileImages/default.png',
+      createdAt: updatedUser.createdAt
+    });
 
   } catch (error) {
     console.error(error);
@@ -147,11 +155,17 @@ router.post('/create', async (req: AuthRequest, res: Response) => {
     const database: Db = await getDatabase();
     const usersCollection: Collection<User> = database.collection("Users");
 
-    const newUser: User = {
+    let newUser: User = {
+      name: req.body.name,
+      firstName: req.body.firstName || '',
+      lastName: req.body.lastName || '',
+      password: req.body.password,
+      bio: req.body.bio || '',
+      email: req.body.email,
+      totalPosts: 0,
       createdAt: new Date(),
       lastLoginAt: new Date(),
-      totalPosts: 0,
-      ...req.body
+      profilePictureUrl: '/profileImages/default.png' // <- always on new account
     };
 
     const result = userSchema.safeParse(newUser);
@@ -183,7 +197,7 @@ router.post('/create', async (req: AuthRequest, res: Response) => {
 
     res.status(201).send({
       userId: sysUser.insertedId,
-      token
+      token: token
     });
 
   } catch (error) {
@@ -226,7 +240,18 @@ router.post('/login', async (req: AuthRequest, res: Response) => {
       process.env.JWT_SECRET
     );
 
-    res.send({ token });
+    res.send({
+      token: token,
+      user: {
+        name: user.name,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        bio: user.bio,
+        profilePictureUrl: user.profilePictureUrl || '/profileImages/default.png',
+        createdAt: user.createdAt
+      }
+    });
 
   } catch (error) {
     console.error(error);

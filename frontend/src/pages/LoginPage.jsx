@@ -1,3 +1,5 @@
+// --- LoginPage.jsx ---
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../css/Login.css';
@@ -14,18 +16,17 @@ const LoginPage = ({ onLogin }) => {
       const res = await fetch('/users/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }) // 🔥 Fixed to send username not name
+        body: JSON.stringify({ username, password })
       });
 
       if (res.ok) {
         const data = await res.json();
         localStorage.setItem('token', data.token);
-        localStorage.setItem('username', username); // 🔥 Store username, not name
+        localStorage.setItem('username', username);
 
-        // Decode userId from token
-        const userId = parseJwt(data.token)?.userId;
-        if (userId) {
-          localStorage.setItem('userId', userId);
+        const decodedToken = parseJwt(data.token);
+        if (decodedToken?.userId) {
+          localStorage.setItem('userId', decodedToken.userId);
         }
 
         await onLogin(username);
@@ -57,7 +58,7 @@ const LoginPage = ({ onLogin }) => {
       <div className="login-container">
         <h2 className="login-title">Login</h2>
         <form onSubmit={handleSubmit} className="login-form">
-          <label className="login-label">Username</label> {/* 🔥 fixed label */}
+          <label className="login-label">Username</label>
           <input
             type="text"
             value={username}

@@ -10,7 +10,8 @@ const AccountPage = ({ user, handleLogout, onUserUpdate }) => {
     firstName: user?.firstName || '',
     lastName: user?.lastName || '',
     email: user?.email || '',
-    bio: user?.bio || ''
+    bio: user?.bio || '',
+    password: ''
   });
   const [selectedFile, setSelectedFile] = useState(null);
 
@@ -21,7 +22,8 @@ const AccountPage = ({ user, handleLogout, onUserUpdate }) => {
         firstName: user.firstName || '',
         lastName: user.lastName || '',
         email: user.email || '',
-        bio: user.bio || ''
+        bio: user.bio || '',
+        password: ''
       });
       setSelectedFile(null);
     }
@@ -54,15 +56,22 @@ const AccountPage = ({ user, handleLogout, onUserUpdate }) => {
       formData.append('lastName', editData.lastName);
       formData.append('email', editData.email);
       formData.append('bio', editData.bio);
+
+      if (editData.password) {
+        formData.append('password', editData.password);
+      }
+
       if (selectedFile) {
         formData.append('profilePicture', selectedFile);
       }
+
       const token = localStorage.getItem('token');
       const res = await fetch('/users/update', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` },
         body: formData
       });
+
       if (res.ok) {
         const updatedUser = await res.json();
         onUserUpdate && onUserUpdate({
@@ -72,8 +81,8 @@ const AccountPage = ({ user, handleLogout, onUserUpdate }) => {
           lastName: updatedUser.lastName || '',
           bio: updatedUser.bio || '',
           profilePictureUrl: updatedUser.profilePictureUrl || '',
-          memberSince: updatedUser.createdAt 
-            ? new Date(updatedUser.createdAt).toLocaleDateString() 
+          memberSince: updatedUser.createdAt
+            ? new Date(updatedUser.createdAt).toLocaleDateString()
             : user.memberSince,
           userId: user.userId
         });
@@ -96,7 +105,6 @@ const AccountPage = ({ user, handleLogout, onUserUpdate }) => {
 
         {user ? (
           editMode ? (
-            /* ----------- EDIT MODE ----------- */
             <form className={styles['account-info']} onSubmit={handleSave}>
               <div className={styles['edit-field-group']}>
                 <label className={styles['edit-label']}>First Name</label>
@@ -144,6 +152,18 @@ const AccountPage = ({ user, handleLogout, onUserUpdate }) => {
               </div>
 
               <div className={styles['edit-field-group']}>
+                <label className={styles['edit-label']}>Password</label>
+                <input
+                  className={styles['account-field']}
+                  name="password"
+                  type="password"
+                  placeholder="(leave blank to keep same)"
+                  value={editData.password}
+                  onChange={handleChangeEdit}
+                />
+              </div>
+
+              <div className={styles['edit-field-group']}>
                 <label className={styles['edit-label']}>Bio</label>
                 <textarea
                   className={styles['account-field']}
@@ -175,14 +195,38 @@ const AccountPage = ({ user, handleLogout, onUserUpdate }) => {
               </div>
             </form>
           ) : (
-            /* ----------- VIEW MODE ----------- */
             <div className={styles['account-info']}>
-              <div className={styles['account-field']}><strong>Username:</strong> {user.username}</div>
-              <div className={styles['account-field']}><strong>First Name:</strong> {user.firstName || 'N/A'}</div>
-              <div className={styles['account-field']}><strong>Last Name:</strong> {user.lastName || 'N/A'}</div>
-              <div className={styles['account-field']}><strong>Email:</strong> {user.email}</div>
-              <div className={styles['account-field']}><strong>Bio:</strong> {user.bio || 'N/A'}</div>
-              <div className={styles['account-field']}><strong>Member Since:</strong> {user.memberSince}</div>
+              <div className={styles['profile-picture-wrapper']}>
+               <img
+              src={
+                user.profilePictureUrl 
+                  ? user.profilePictureUrl.startsWith('/uploads/')
+                    ? user.profilePictureUrl // user-uploaded image
+                    : user.profilePictureUrl // default image from public
+                  : '/profileImages/default.png' // fallback if no image
+              }
+              alt="Profile"
+              className={styles['profile-picture']}
+              />
+              </div>
+              <div className={styles['account-field']}>
+                <span className={styles['field-label']}>Username:</span> {user.username}
+              </div>
+              <div className={styles['account-field']}>
+                <span className={styles['field-label']}>First Name:</span> {user.firstName || 'N/A'}
+              </div>
+              <div className={styles['account-field']}>
+                <span className={styles['field-label']}>Last Name:</span> {user.lastName || 'N/A'}
+              </div>
+              <div className={styles['account-field']}>
+                <span className={styles['field-label']}>Email:</span> {user.email}
+              </div>
+              <div className={styles['account-field']}>
+                <span className={styles['field-label']}>Bio:</span> {user.bio || 'N/A'}
+              </div>
+              <div className={styles['account-field']}>
+                <span className={styles['field-label']}>Member Since:</span> {user.memberSince}
+              </div>
 
               <div className={styles['account-buttons']}>
                 <button

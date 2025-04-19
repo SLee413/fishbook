@@ -6,6 +6,8 @@ services:
       - "5000:5000"
     environment:
       - NODE_ENV=development
+    volumes:
+      - ./backend/uploads:/usr/src/app/uploads  
 
   frontend:
     build: ./frontend
@@ -13,3 +15,5 @@ services:
       - "3000:3000"
     depends_on:
       - backend
+    volumes:
+      - ./frontend/public/profileImages:/usr/src/app/public/profileImages 

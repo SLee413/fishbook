@@ -13,7 +13,7 @@ const jwt = require("jsonwebtoken");
 
 export interface AuthRequest extends Request {
   user?: any;
-  file?: any; // ✅ NO MULTER IMPORT, just any
+  file?: any; // ✅ 
 }
 
 /**
