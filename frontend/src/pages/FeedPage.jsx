@@ -124,7 +124,10 @@ const FeedPage = () => {
                 <p><strong>📏 Length:</strong> {post.length} {post.lengthUnit || "in"}</p>
               )}
               {post.dateCaught && (
-                <p><strong>🕒 Caught:</strong> {formatDate(post.dateCaught)}</p>
+                <p>
+                  <strong>🕒 Caught:</strong> {formatDate(post.dateCaught)}{" "}
+                  {post.weather && post.weather.weathercode !== undefined && getWeatherIcon(post.weather.weathercode)}
+                </p>
               )}
               {post.moonPhase && <p><strong>🌙 Moon:</strong> {post.moonPhase}</p>}
               {post.weather && (
@@ -132,7 +135,6 @@ const FeedPage = () => {
                   <p><strong>🌡️ Temp:</strong> {post.weather.temperature ?? "?"}°F</p>
                   <p><strong>💧 Precip:</strong> {post.weather.precipitation ?? "?"} in</p>
                   <p><strong>🌬️ Wind:</strong> {post.weather.windspeed ?? "?"} mph</p>
-                  <p>{post.weather.weathercode !== undefined ? getWeatherIcon(post.weather.weathercode) : ""}</p>
                 </>
               )}
               <p style={{ fontStyle: 'italic', marginTop: '10px' }}>
