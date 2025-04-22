@@ -6,7 +6,7 @@ import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import L from 'leaflet';
 
-// Fix Leaflet's default icon path
+
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: markerIcon2x,
@@ -18,9 +18,16 @@ const CreatePost = () => {
   const [description, setDescription] = useState('');
   const [fishType, setFishType] = useState('');
   const [weight, setWeight] = useState('');
+  const [weightUnit, setWeightUnit] = useState('lbs');
   const [length, setLength] = useState('');
+  const [lengthUnit, setLengthUnit] = useState('in');
   const [bait, setBait] = useState('');
   const [waterType, setWaterType] = useState('');
+  const [month, setMonth] = useState('');
+  const [day, setDay] = useState('');
+  const [year, setYear] = useState('');
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
 
   const mapRef = useRef(null);
   const markerRef = useRef(null);
@@ -55,6 +62,41 @@ const CreatePost = () => {
     }
   }, []);
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setSelectedFile(file);
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setPreviewUrl(event.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  async function uploadImage() {
+    if (!selectedFile) return null;
+    const formData = new FormData();
+    formData.append('profilePicture', selectedFile);
+
+    const token = localStorage.getItem("token");
+
+    const res = await fetch('/upload', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      return data.filePath;
+    } else {
+      console.error('Failed to upload image');
+      return null;
+    }
+  }
+
   async function fetchWeather(lat, lng, datetime) {
     const hour = parseInt(datetime.split("T")[1].split(":")[0]);
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&hourly=temperature_2m,precipitation,weathercode,windspeed_10m&temperature_unit=fahrenheit&precipitation_unit=inch&windspeed_unit=mph&timezone=America%2FNew_York`;
@@ -85,28 +127,46 @@ const CreatePost = () => {
     }
   }
 
+  const buildCaughtDate = () => {
+    if (!month || !day || !year) return null;
+    return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T00:00:00`;
+  };
+
   const handlePostSubmit = async (e) => {
     e.preventDefault();
     if (!selectedLatLng) {
       alert("Please select a pin location on the map.");
       return;
     }
+    if (!month || !day || !year) {
+      alert("Please select month, day, and year for Date Caught.");
+      return;
+    }
 
-    const dateCaught = new Date();
-    const dateStr = dateCaught.toISOString().split("T")[0];
-    const weather = await fetchWeather(selectedLatLng.lat, selectedLatLng.lng, dateCaught.toISOString());
-    const moonPhase = await fetchMoonPhase(dateStr);
+    let imageUrl = "https://example.com/fakeimg.jpg";
+    if (selectedFile) {
+      const uploadedPath = await uploadImage();
+      if (uploadedPath) {
+        imageUrl = uploadedPath;
+      }
+    }
+
+    const caughtDateStr = buildCaughtDate();
+    const weather = await fetchWeather(selectedLatLng.lat, selectedLatLng.lng, caughtDateStr);
+    const moonPhase = await fetchMoonPhase(caughtDateStr);
 
     const postData = {
-      imageUrl: "https://example.com/fakeimg.jpg",
-      dateCaught: dateCaught.toISOString(),
+      imageUrl,
+      dateCaught: caughtDateStr,
       location: { lat: selectedLatLng.lat, lng: selectedLatLng.lng },
       species: fishType,
-      bait: bait || null,             
+      bait: bait || null,
       waterType: waterType || null,
       description,
       weight: weight || null,
+      weightUnit: weightUnit || "lbs",
       length: length || null,
+      lengthUnit: lengthUnit || "in",
       weather,
       moonPhase
     };
@@ -115,172 +175,201 @@ const CreatePost = () => {
 
     const res = await fetch('/api/posts/', {
       method: 'POST',
-      headers: { 
+      headers: {
         'Content-Type': 'application/json',
-        'Authorization' : `Bearer ${localStorage.getItem("token")}` 
+        'Authorization': `Bearer ${localStorage.getItem("token")}`
       },
       body: JSON.stringify(postData)
     });
 
     if (res.ok) {
       alert("Post created!");
+      navigate('/');
     } else {
       alert("Error creating post.");
     }
   };
 
   return (
-    <main style={{ display: 'flex', flexDirection: 'column', height: '100vh', padding: '20px' }}>
+    <main style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', padding: '20px', overflowY: 'auto' }}>
       <h2>Create a Post</h2>
-      <div
-        style={{
+      <div style={{
         display: 'flex',
-        flex: 1,
+        flexWrap: 'wrap',
         gap: '20px',
         minHeight: 0,
-        overflow: 'hidden',
-        }}
->
+      }}>
+        <form onSubmit={handlePostSubmit} style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '15px',
+          width: '400px',
+          flexShrink: 0,
+          flexGrow: 0,
+        }}>
+          {/* Upload Image */}
+          <div>
+            <label style={{ fontWeight: 'bold' }}>Upload Image:</label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+              style={{ padding: '5px', fontSize: '15px' }}
+            />
+            {previewUrl && (
+              <img
+                src={previewUrl}
+                alt="Preview"
+                style={{
+                  marginTop: '10px',
+                  width: '100%',
+                  aspectRatio: '1/1',
+                  objectFit: 'cover',
+                  borderRadius: '8px',
+                  border: '1px solid #ccc'
+                }}
+              />
+            )}
+          </div>
 
-<form
-  onSubmit={handlePostSubmit}
-  style={{
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '15px',
-    width: '350px',         
-    flexShrink: 0,          
-    flexGrow: 0,           
-    paddingRight: '20px',
-  }}
->
+          {/* Date Caught */}
+          <div>
+            <label style={{ fontWeight: 'bold' }}>Date Caught:</label>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <select value={month} onChange={(e) => setMonth(e.target.value)} style={{ flex: 1 }}>
+                <option value="">Month</option>
+                {[...Array(12)].map((_, i) => (
+                  <option key={i + 1} value={i + 1}>{i + 1}</option>
+                ))}
+              </select>
+              <select value={day} onChange={(e) => setDay(e.target.value)} style={{ flex: 1 }}>
+                <option value="">Day</option>
+                {[...Array(31)].map((_, i) => (
+                  <option key={i + 1} value={i + 1}>{i + 1}</option>
+                ))}
+              </select>
+              <select value={year} onChange={(e) => setYear(e.target.value)} style={{ flex: 1 }}>
+                <option value="">Year</option>
+                {Array.from({ length: 76 }, (_, i) => 1950 + i).map((y) => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+            </div>
+          </div>
 
+          {/* Fish Type */}
+          <div>
+            <label style={{ fontWeight: 'bold' }}>Fish Type:</label>
+            <input
+              type="text"
+              value={fishType}
+              onChange={(e) => setFishType(e.target.value)}
+              placeholder="e.g., Bass, Trout"
+              style={{ width: '100%' }}
+            />
+          </div>
 
-  <div>
-    <label style={{ fontWeight: 'bold' }}>Fish Type:</label>
-    <input
-      type="text"
-      value={fishType}
-      onChange={(e) => setFishType(e.target.value)}
-      placeholder="e.g., Bass, Trout"
-      style={{ padding: '10px', fontSize: '16px', width: '100%' }}
-    />
+          {/* Description */}
+          <div>
+            <label style={{ fontWeight: 'bold' }}>Description:</label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Write your post description..."
+              rows={3}
+              style={{ width: '100%' }}
+            />
+          </div>
 
-  </div>
+          {/* Bait */}
+          <div>
+            <label style={{ fontWeight: 'bold' }}>Bait:</label>
+            <input
+              type="text"
+              value={bait}
+              onChange={(e) => setBait(e.target.value)}
+              placeholder="e.g., worms, lures"
+              style={{ width: '100%' }}
+            />
+          </div>
 
-  <div>
-    <label style={{ fontWeight: 'bold' }}>Description:</label>
-    <textarea
-      value={description}
-      onChange={(e) => setDescription(e.target.value)}
-      placeholder="Write your post description..."
-      rows={4}
-      style={{
-        width: '100%',
-        padding: '10px',
-        fontSize: '15px',
-        borderRadius: '6px',
-        border: '1px solid #ccc'
-      }}
-      required
-    />
-  </div>
+          {/* Water Type */}
+          <div>
+            <label style={{ fontWeight: 'bold' }}>Water Type:</label>
+            <select
+              value={waterType}
+              onChange={(e) => setWaterType(e.target.value)}
+              style={{ width: '100%' }}
+            >
+              <option value="">Select type</option>
+              <option value="Fresh">Freshwater</option>
+              <option value="Salt">Saltwater</option>
+            </select>
+          </div>
 
-  <div>
-    <label style={{ fontWeight: 'bold' }}>Bait:</label>
-    <input
-      type="text"
-      value={bait}
-      onChange={(e) => setBait(e.target.value)}
-      placeholder="e.g., worms, lures"
-      style={{
-        width: '100%',
-        padding: '10px',
-        fontSize: '15px',
-        borderRadius: '6px',
-        border: '1px solid #ccc'
-      }}
-    />
-  </div>
+          {/* Weight */}
+          <div>
+            <label style={{ fontWeight: 'bold' }}>Weight:</label>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <input
+                type="number"
+                value={weight}
+                onChange={(e) => setWeight(e.target.value)}
+                style={{ flex: 1 }}
+              />
+              <select
+                value={weightUnit}
+                onChange={(e) => setWeightUnit(e.target.value)}
+                style={{ flex: 1 }}
+              >
+                <option value="lbs">lbs</option>
+                <option value="kg">kg</option>
+              </select>
+            </div>
+          </div>
 
-  <div>
-    <label style={{ fontWeight: 'bold' }}>Water Type:</label>
-    <select
-      value={waterType}
-      onChange={(e) => setWaterType(e.target.value)}
-      style={{
-        width: '100%',
-        padding: '10px',
-        fontSize: '15px',
-        borderRadius: '6px',
-        border: '1px solid #ccc'
-      }}
-    >
-      <option value="">Select type</option>
-      <option value="Fresh">Freshwater</option>
-      <option value="Salt">Saltwater</option>
-    </select>
-  </div>
+          {/* Length */}
+          <div>
+            <label style={{ fontWeight: 'bold' }}>Length:</label>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <input
+                type="number"
+                value={length}
+                onChange={(e) => setLength(e.target.value)}
+                style={{ flex: 1 }}
+              />
+              <select
+                value={lengthUnit}
+                onChange={(e) => setLengthUnit(e.target.value)}
+                style={{ flex: 1 }}
+              >
+                <option value="in">in</option>
+                <option value="cm">cm</option>
+              </select>
+            </div>
+          </div>
 
-  <div>
-    <label style={{ fontWeight: 'bold' }}>Weight:</label>
-    <div style={{ display: 'flex', alignItems: 'center' }}>
-      <input
-        type="text"
-        value={weight}
-        onChange={(e) => setWeight(e.target.value)}
-        placeholder="e.g., 3.5"
-        style={{
-          flex: 1,
-          padding: '10px',
-          fontSize: '15px',
-          borderRadius: '6px',
-          border: '1px solid #ccc'
-        }}
-      />
-      <span style={{ marginLeft: '8px' }}>lbs</span>
-    </div>
-  </div>
+          {/* Submit Button */}
+          <button type="submit" style={{
+            padding: '12px',
+            fontSize: '16px',
+            backgroundColor: '#0077cc',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer'
+          }}>
+            Post
+          </button>
+        </form>
 
-  <div>
-    <label style={{ fontWeight: 'bold' }}>Length:</label>
-    <div style={{ display: 'flex', alignItems: 'center' }}>
-      <input
-        type="text"
-        value={length}
-        onChange={(e) => setLength(e.target.value)}
-        placeholder="e.g., 18"
-        style={{
-          flex: 1,
-          padding: '10px',
-          fontSize: '15px',
-          borderRadius: '6px',
-          border: '1px solid #ccc'
-        }}
-      />
-      <span style={{ marginLeft: '8px' }}>in</span>
-    </div>
-  </div>
-
-  <button
-    type="submit"
-    style={{
-      padding: '12px',
-      fontSize: '16px',
-      backgroundColor: '#0077cc',
-      color: '#fff',
-      border: 'none',
-      borderRadius: '6px',
-      cursor: 'pointer',
-      marginTop: '10px'
-    }}
-  >
-    Post
-  </button>
-</form>
-
-
-        <div id="map" style={{ height: '100%', flex: 2, minWidth: '400px', borderRadius: '8px' }}></div>
+        <div id="map" style={{
+          height: '600px',
+          flex: 2,
+          minWidth: '400px',
+          borderRadius: '8px',
+          overflow: 'hidden'
+        }}></div>
       </div>
     </main>
   );

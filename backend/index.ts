@@ -1,5 +1,6 @@
 import { postsRouter, usersRouter } from "./routes";
 import * as cors from "cors";
+const uploadRouter = require('./routes/upload');
 const express = require('express');
 const path = require('path');
 const app = express();
@@ -21,8 +22,11 @@ if (!fs.existsSync(uploadDir)) {
 }
 app.use('/uploads', express.static(uploadDir));
 
+// 🔥 ✅ Add upload router
+app.use('/upload', uploadRouter);
+
 // Posts API routes
-app.use('/api/posts', postsRouter); 
+app.use('/api/posts', postsRouter);
 
 // Test route (unchanged)
 app.post('/api/test-log', (req, res) => {

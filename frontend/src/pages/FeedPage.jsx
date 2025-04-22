@@ -40,10 +40,16 @@ const FeedPage = () => {
     fetchPosts();
   }, []);
 
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${month}/${day}/${year}`;
+  };
+
   return (
     <main style={{ padding: '20px' }}>
-      <h2>Feed</h2>
-
       {posts.length === 0 ? (
         <p>No posts yet.</p>
       ) : (
@@ -51,36 +57,88 @@ const FeedPage = () => {
           <div
             key={post._id}
             style={{
+              display: 'flex',
+              flexDirection: 'row',
               border: '1px solid #ccc',
-              padding: '15px',
-              marginBottom: '15px',
+              padding: '20px',
+              marginBottom: '20px',
               borderRadius: '8px',
               backgroundColor: '#f9f9f9',
+              gap: '20px',
+              alignItems: 'flex-start',
             }}
           >
-            <p><strong>🎣 Angler:</strong> {post.authorName || "Unknown"}</p>
-            <p><strong>🐟 Fish Type:</strong> {post.species || "Unknown Fish"}</p>
-            <p><strong>📝 Description:</strong> {post.description || "No description"}</p>
-            {post.bait && <p><strong>🪱 Bait:</strong> {post.bait}</p>}
-            {post.waterType && <p><strong>💧 Water:</strong> {post.waterType}</p>}
-            {post.weight && <p><strong>⚖️ Weight:</strong> {post.weight}</p>}
-            {post.length && <p><strong>📏 Length:</strong> {post.length}</p>}
-            <p>
-              <strong>🕒 Caught:</strong> {new Date(post.dateCaught).toLocaleString()}{" "}
-              {post.weather && post.weather.weathercode !== undefined
-                ? getWeatherIcon(post.weather.weathercode)
-                : ""}
-            </p>
-            {post.moonPhase && <p><strong>🌙 Moon:</strong> {post.moonPhase}</p>}
-            {post.weather && (
-              <>
-                <p><strong>🌡️ Temp:</strong> {post.weather.temperature ?? "?"}°F</p>
-                <p><strong>💧 Precip:</strong> {post.weather.precipitation ?? "?"} in</p>
-                <p><strong>🌬️ Wind:</strong> {post.weather.windspeed ?? "?"} mph</p>
-              </>
-            )}
+            {/* Left side - Profile and Image */}
+            <div style={{ display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+              {/* Profile Pic + Username */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                marginBottom: '10px',
+                gap: '10px'
+              }}>
+                {post.authorProfilePicture && (
+                  <img
+                    src={post.authorProfilePicture}
+                    alt="Profile"
+                    style={{
+                      width: '50px',
+                      height: '50px',
+                      borderRadius: '50%',
+                      objectFit: 'cover',
+                      border: '2px solid #ccc'
+                    }}
+                  />
+                )}
+                <span style={{ fontWeight: 'bold', fontSize: '18px' }}>
+                  {post.authorName || "Unknown"}
+                </span>
+              </div>
 
-            <p style={{ fontStyle: 'italic' }}>Posted on {new Date(post.datePosted).toLocaleString()}</p>
+              {/* Post Image */}
+              {post.imageUrl && (
+                <img
+                  src={post.imageUrl}
+                  alt="Catch"
+                  style={{
+                    width: '450px',
+                    height: '450px',
+                    objectFit: 'cover',
+                    borderRadius: '8px',
+                    marginTop: '5px'
+                  }}
+                />
+              )}
+            </div>
+
+            {/* Right side - Post Info */}
+            <div style={{ flex: 1, marginTop: '70px' }}>
+              <p><strong>🐟 Fish Type:</strong> {post.species || "Unknown Fish"}</p>
+              <p><strong>📝 Description:</strong> {post.description || "No description"}</p>
+              {post.bait && <p><strong>🪱 Bait:</strong> {post.bait}</p>}
+              {post.waterType && <p><strong>💧 Water:</strong> {post.waterType}</p>}
+              {post.weight && (
+                <p><strong>⚖️ Weight:</strong> {post.weight} {post.weightUnit || "lbs"}</p>
+              )}
+              {post.length && (
+                <p><strong>📏 Length:</strong> {post.length} {post.lengthUnit || "in"}</p>
+              )}
+              {post.dateCaught && (
+                <p><strong>🕒 Caught:</strong> {formatDate(post.dateCaught)}</p>
+              )}
+              {post.moonPhase && <p><strong>🌙 Moon:</strong> {post.moonPhase}</p>}
+              {post.weather && (
+                <>
+                  <p><strong>🌡️ Temp:</strong> {post.weather.temperature ?? "?"}°F</p>
+                  <p><strong>💧 Precip:</strong> {post.weather.precipitation ?? "?"} in</p>
+                  <p><strong>🌬️ Wind:</strong> {post.weather.windspeed ?? "?"} mph</p>
+                  <p>{post.weather.weathercode !== undefined ? getWeatherIcon(post.weather.weathercode) : ""}</p>
+                </>
+              )}
+              <p style={{ fontStyle: 'italic', marginTop: '10px' }}>
+                Posted on {formatDate(post.datePosted)}
+              </p>
+            </div>
           </div>
         ))
       )}
