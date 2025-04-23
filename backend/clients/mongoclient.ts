@@ -12,6 +12,7 @@ import { MongoClient, Db } from 'mongodb';
 // Configure environment variables
 require('dotenv').config();
 
+// we have to keep these here because some team members struggle with actually following instructions
 console.log("🔧 Loaded ENV:");
 console.log("  USER:", process.env.MONGODB_USER);
 console.log("  HOST:", process.env.MONGODB_HOST);
@@ -19,7 +20,6 @@ console.log("  DB:", process.env.MONGODB_DATABASE);
 
 // Login to the Mongo client
 const uri = `mongodb+srv://${process.env.MONGODB_USER}:${process.env.MONGODB_PASSWORD}@${process.env.MONGODB_HOST}/?retryWrites=true&w=majority`;
-console.log("📡 MongoDB URI:", uri);  // Be cautious—this logs the full URI including password
 
 const client = new MongoClient(uri);
 

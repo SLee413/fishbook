@@ -17,8 +17,18 @@ const auth = require('./authentication');
 const router = Router();
 
 /**
- * Gets a list of posts
- */
+  * Gets a list of posts
+  * 
+  * @query filterWaterType String - Filters posts by specific water type
+  * @query lastPost PostId - Will return the next posts after a given postId
+  * @query user UserId - Will return posts by a specific user
+  * 
+  * IF you supply an authenticated user, each post will have a liked field
+  * 
+  * @return {
+* 	posts - Array of posts
+* }
+*/
 router.get('/', auth, async (req: AuthRequest, res: Response) => {
 	try {
 		const database: Db = await getDatabase();
@@ -82,6 +92,10 @@ router.get('/', auth, async (req: AuthRequest, res: Response) => {
 
 /**
  * Gets a specific post by ID
+ * 
+ * IF you supply an authenticated user, the post will have a liked field
+ * 
+ * @return post - the post object
  */
 router.get('/:postid', auth, async (req: AuthRequest, res: Response) => {
 	try {
@@ -89,11 +103,13 @@ router.get('/:postid', auth, async (req: AuthRequest, res: Response) => {
 		const postsCollection: Collection<Post> = database.collection("Posts");
 		const likesCollection: Collection<any> = database.collection("Likes");
 
+		// Ensure that the post id is valid
 		if (!ObjectId.isValid(req.params.postid)) {
 			res.status(404).send("Invalid post");
 			return;
 		}
 
+		// Get the post
 		let post = await postsCollection.findOne({
 			_id: new ObjectId(req.params.postid)
 		});
@@ -102,6 +118,7 @@ router.get('/:postid', auth, async (req: AuthRequest, res: Response) => {
 			return;
 		}
 
+		// User is signed in, add a liked field
 		if (req.user != null) {
 			let newPost = post as any;
 			newPost.liked = false;
@@ -128,8 +145,25 @@ router.get('/:postid', auth, async (req: AuthRequest, res: Response) => {
 
 /**
  * Creates a new post
- */
+ * 
+ * @requires authentication
+ * 
+ * @body A JSON object that contains:
+ * 	- imageURL	-	String
+ * 	- dateCaught-	Date (can be string)
+ * 	- location -	JSON object that contains
+ * 		- lat -		Number
+ * 		- lng -		Number
+ * 	- species -		String (optional)
+ * 	- bait -		String (optional)
+ * 	- waterType -	String (optional)
+ * 
+ * @return {
+ * 	postId - ID of the new post
+ * }
+*/
 router.post('/', auth, async (req: AuthRequest, res: Response) => {
+	// Only authenticated users can use this endpoint
 	if (!req.user) {
 		res.status(401).send("Unauthorized");
 		return;
@@ -142,6 +176,7 @@ router.post('/', auth, async (req: AuthRequest, res: Response) => {
 
 		let user: User = req.user;
 
+		// Create the post
 		let newPost: Post = {
 			authorId: user._id,
 			authorName: user.name, 
@@ -150,6 +185,7 @@ router.post('/', auth, async (req: AuthRequest, res: Response) => {
 			likes: 0
 		};
 
+		// Transfer all non-existing properties to the new post
 		for (let property in req.body) {
 			if (!newPost[property]) {
 				if (property === "dateCaught") {
@@ -160,8 +196,10 @@ router.post('/', auth, async (req: AuthRequest, res: Response) => {
 			}
 		}
 
+		// Parse the schema
 		let result = postSchema.safeParse(newPost);
 
+		// Schema check failed
 		if (!result.success) {
 			res.status(400).send('Invalid post structure');
 			return;
@@ -170,6 +208,7 @@ router.post('/', auth, async (req: AuthRequest, res: Response) => {
 		let postData: Post = result.data;
 		let postInsertion = await postsCollection.insertOne(postData);
 
+		// If the post goes through, update the user's total post count
 		if (postInsertion.acknowledged) {
 			usersCollection.updateOne(
 				{ "_id": user._id },
@@ -185,23 +224,34 @@ router.post('/', auth, async (req: AuthRequest, res: Response) => {
 	}
 });
 
-/**
- * Gets comments for a post
+/** 
+ * Gets a list of comments on a given post
+ * 
+ * @param postid The ID of the post
+ * 
+ * @query lastComment - CommentId - Will return comments after a specific commentId
+ * 
+ * @return {
+ * 	comments - Array of comments
+ * }
  */
 router.get('/:postid/comments', async (req: Request, res: Response) => {
 	try {
 		const database: Db = await getDatabase();
 		const commentsCollection: Collection<Comment> = database.collection("Comments");
 
+		// Ensure post id is valid
 		if (!ObjectId.isValid(req.params.postid)) {
 			res.status(404).send("Invalid post");
 			return;
 		}
 
+		// Add in query filters
 		let filters: any = {
 			postId: new ObjectId(req.params.postid)
 		};
 
+		// You can use this to implement infinite scroll
 		let lastComment = req.query["lastComment"];
 		if (typeof lastComment === 'string' && ObjectId.isValid(lastComment)) {
 			filters["_id"] = { $lt: new ObjectId(lastComment) };
@@ -222,7 +272,17 @@ router.get('/:postid/comments', async (req: Request, res: Response) => {
 
 /**
  * Creates a comment on a post
- */
+ * @requires authentication
+ * 
+ * @param postid The ID of the post
+ * 
+ * @body A JSON object that contains:
+ *	- comment - 	String
+* 
+* @return {
+* 	commentId - The ID of the new comment
+* }
+*/
 router.post('/:postid/comments', auth, async (req: AuthRequest, res: Response) => {
 	if (!req.user) {
 		res.status(401).send("Unauthorized");
@@ -234,11 +294,13 @@ router.post('/:postid/comments', auth, async (req: AuthRequest, res: Response) =
 		const postsCollection: Collection<Post> = database.collection("Posts");
 		const commentsCollection: Collection<Comment> = database.collection("Comments");
 
+		// Ensure post id is valid
 		if (!ObjectId.isValid(req.params.postid)) {
 			res.status(404).send("Invalid post");
 			return;
 		}
 
+		// Find the post, ensure it's valid
 		let post = await postsCollection.findOne({
 			_id: new ObjectId(req.params.postid)
 		});
@@ -247,20 +309,23 @@ router.post('/:postid/comments', auth, async (req: AuthRequest, res: Response) =
 			return;
 		}
 
+		// Create comment
 		let newComment: Comment = {
 			postId: post._id,
 			datePosted: new Date(),
 			authorId: req.user._id,
-			authorName: req.user.username, // 🔥 FIXED: use username
+			authorName: req.user.username,
 			authorProfilePicture: req.user.profilePictureUrl
 		};
 
+		// Transfer properties of comment to the newcomment
 		for (let property in req.body) {
 			if (!newComment[property]) {
 				newComment[property] = req.body[property];
 			}
 		}
 
+		// Schema check
 		let result = postSchema.safeParse(newComment);
 
 		if (!result.success) {
@@ -279,10 +344,19 @@ router.post('/:postid/comments', auth, async (req: AuthRequest, res: Response) =
 	}
 });
 
-/**
- * Likes or unlikes a post
+/** 
+ * Adds or removes a like on a post
+ * @requires authentication
+ * 
+ * @param postid The ID of the post
+ * 
+ * @return {
+ * 	likes - the number of likes on the post,
+ * 	liked - whether the user currently has liked the post
+ * }
  */
 router.post('/:postid/like', auth, async (req: AuthRequest, res: Response) => {
+	// User must be authenticated to use this
 	if (!req.user) {
 		res.status(401).send("Unauthorized");
 		return;
@@ -293,11 +367,13 @@ router.post('/:postid/like', auth, async (req: AuthRequest, res: Response) => {
 		const postsCollection: Collection<Post> = database.collection("Posts");
 		const likesCollection: Collection<any> = database.collection("Likes");
 
+		// Ensure post id is valid
 		if (!ObjectId.isValid(req.params.postid)) {
 			res.status(404).send("Invalid post");
 			return;
 		}
 
+		// Find the post
 		let post = await postsCollection.findOne({
 			_id: new ObjectId(req.params.postid)
 		});
@@ -306,12 +382,15 @@ router.post('/:postid/like', auth, async (req: AuthRequest, res: Response) => {
 			return;
 		}
 
+		// Attempt to find like document
 		let likeDocument = await likesCollection.findOne({
 			postId: post._id,
 			authorId: req.user._id
 		});
 
+		// If there's no like document, the user has not liked this post yet
 		if (!likeDocument) {
+			// Basically we just create one and then increment the likes count
 			await likesCollection.insertOne({
 				authorId: req.user._id,
 				postId: post._id
@@ -328,6 +407,8 @@ router.post('/:postid/like', auth, async (req: AuthRequest, res: Response) => {
 				liked: true
 			});
 		} else {
+			// We found a like document, meaning the user has already liked it
+			// Now we delete that document and decrement the likes counter
 			await likesCollection.findOneAndDelete({ "_id": likeDocument._id });
 
 			let updateResult = await postsCollection.findOneAndUpdate(

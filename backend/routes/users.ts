@@ -1,8 +1,11 @@
 /**
- * @file Controls the users API
- * @description
- * ExpressJS Router for user accounts
- */
+* @file Controls the users API
+* @description
+* This is an ExpressJS Router that specifically handles users
+* 
+* @author Spencer Lee
+* 
+*/
 
 import { Collection, Db, ObjectId } from 'mongodb';
 import { getDatabase } from '../clients/mongoclient';
@@ -45,8 +48,11 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-/**
- * Get user by ID
+/** 
+ * Gets user data
+ * 
+ * @param userid The ID of the user
+ * @return The User object for the particular user (minus password)
  */
 router.get('/:userid', async (req: AuthRequest, res: Response) => {
   try {

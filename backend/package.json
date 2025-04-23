@@ -7,7 +7,17 @@
     "prestart": "tsc",
     "start": "node build/index.js"
   },
-  "author": "Spencer Lee",
+  "author": {
+    "name": "Spencer Lee",
+    "email": "leespe54@students.rowan.edu",
+    "url": "https://slee413.github.io/"
+  },
+  "contributors": [
+    "Reece Dos Santos", 
+    "Brent Brewer", 
+    "Addison Uscinowicz", 
+    "Mark DiVentura"
+  ],
   "license": "ISC",
   "dependencies": {
     "@types/cors": "^2.8.17",
