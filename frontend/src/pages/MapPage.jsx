@@ -36,6 +36,22 @@ function getWeatherIcon(code) {
   return icons[code] || "❓";
 }
 
+const moonPhaseIcons = {
+  "New Moon": "🌑",
+  "Waxing Crescent": "🌒",
+  "First Quarter": "🌓",
+  "Waxing Gibbous": "🌔",
+  "Full Moon": "🌕",
+  "Waning Gibbous": "🌖",
+  "Last Quarter": "🌗",
+  "Waning Crescent": "🌘",
+  "Crescent Moon (Generic)": "🌙",
+  "New Moon Face": "🌚",
+  "Full Moon Face": "🌝",
+  "First Quarter Face": "🌛",
+  "Last Quarter Face": "🌜"
+};
+
 
 const MapPage = () => {
   const mapRef = useRef(null);
@@ -111,6 +127,18 @@ const MapPage = () => {
   
 
 
+  // Fetches moon phase data
+  async function fetchMoonPhase(date) {
+    const timestamp = Math.floor(date.getTime() / 1000);
+    try {
+      const res = await fetch(`https://api.farmsense.net/v1/moonphases/?d=${timestamp}`);
+      const data = await res.json();
+      return data?.[0]?.Phase ?? null;
+    } catch (err) {
+      console.error("🌑 Failed to fetch moon phase:", err);
+      return null;
+    }
+  }
 
 
   const fetchHourlyForecast = async (lat, lng) => {
@@ -122,11 +150,15 @@ const MapPage = () => {
     const now = new Date();
     const currentHourIndex = data.hourly.time.findIndex(t => new Date(t).getHours() === now.getHours());
 
+    let moonData = await fetchMoonPhase(now);
+
+
     return {
       current: {
         temperature: data.current_weather.temperature,
         windspeed: data.current_weather.windspeed,
         weathercode: data.current_weather.weathercode,
+        moonPhase: moonData
       },
       hourly: data.hourly.time.map((time, i) => ({
         hour: new Date(time).getHours(),
@@ -140,6 +172,7 @@ const MapPage = () => {
     };
   };
 
+ 
   return (
     <div style={{ display: 'flex', height: '100vh' }}>
       
@@ -166,6 +199,7 @@ const MapPage = () => {
             <span>{getWeatherIcon(userForecast.current.weathercode)} {userForecast.current.temperature}°F</span>
             <span>{getPrecipIcon(userForecast.hourly[userForecast.indexNow]?.weathercode)} {userForecast.hourly[userForecast.indexNow]?.precipitation} in</span>
             <span>🌬️ Wind: {userForecast.current.windspeed} mph</span>
+            <span>{moonPhaseIcons[userForecast.current.moonPhase] || "🌕"} {userForecast.current.moonPhase}</span>
           </div>
         )}
       </div>
