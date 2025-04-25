@@ -20,18 +20,36 @@ const getWeatherIcon = (code) => {
 
 const FeedPage = () => {
   const [posts, setPosts] = useState([]);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
+    // Check if user is logged in
+    const token = localStorage.getItem('token');
+    setIsLoggedIn(!!token);
+    
     const fetchPosts = async () => {
       try {
-        const response = await fetch('/api/posts');
+        // Include auth token if available to get the liked status
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+        
+        const response = await fetch('/api/posts', {
+          headers
+        });
+        
         const data = await response.json();
 
+        // Ensure posts are properly sorted
         const sortedPosts = data.posts.sort(
           (a, b) => new Date(b.datePosted) - new Date(a.datePosted)
         );
 
-        setPosts(sortedPosts);
+        // Make sure each post has a liked property
+        const postsWithLikedStatus = sortedPosts.map(post => ({
+          ...post,
+          liked: post.liked || false // Default to false if not provided
+        }));
+
+        setPosts(postsWithLikedStatus);
       } catch (error) {
         console.error('Failed to fetch posts:', error);
       }
@@ -46,6 +64,47 @@ const FeedPage = () => {
     const day = String(date.getDate()).padStart(2, '0');
     const year = date.getFullYear();
     return `${month}/${day}/${year}`;
+  };
+
+  const handleLike = async (postId) => {
+    try {
+      //Grabbing the auth. token
+      const token = localStorage.getItem('token');
+      
+      //Checking if logged in
+      if (!token) {
+        alert('Please login to like posts');
+        return;
+      }
+      
+      // Making a POST request
+      const response = await fetch(`/api/posts/${postId}/like`, {
+        method: 'POST',
+        headers: {
+          //Including the auth. token in request
+          'Authorization': `Bearer ${token}`,        
+        }
+      });
+  
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Update the posts
+        setPosts(prevPosts => prevPosts.map(post => {
+          // Find the post 
+          if (post._id === postId) {
+            return {
+              ...post,              
+              likes: data.likes,    
+              liked: data.liked     
+            };
+          }
+          return post;
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to like post:', error);
+    }
   };
 
   return (
@@ -113,6 +172,27 @@ const FeedPage = () => {
 
             {/* Right side - Post Info */}
             <div style={{ flex: 1, marginTop: '70px' }}>
+              {/* Like Button */}
+              <div style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <button
+                  onClick={() => handleLike(post._id)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: '24px',
+                    color: post.liked ? '#ff4b4b' : '#666',
+                    transition: 'transform 0.2s',
+                    transform: post.liked ? 'scale(1.1)' : 'scale(1)',
+                  }}
+                >
+                  {post.liked ? '❤️' : '🤍'}
+                </button>
+                <span style={{ fontSize: '16px', color: '#666' }}>
+                  {post.likes || 0} {post.likes === 1 ? 'like' : 'likes'}
+                </span>
+              </div>
+
               <p><strong>🐟 Fish Type:</strong> {post.species || "Unknown Fish"}</p>
               <p><strong>📝 Description:</strong> {post.description || "No description"}</p>
               {post.bait && <p><strong>🪱 Bait:</strong> {post.bait}</p>}
