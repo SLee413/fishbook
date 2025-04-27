@@ -284,64 +284,53 @@ router.get('/:postid/comments', async (req: Request, res: Response) => {
 * }
 */
 router.post('/:postid/comments', auth, async (req: AuthRequest, res: Response) => {
-	if (!req.user) {
-		res.status(401).send("Unauthorized");
-		return;
-	}
+    if (!req.user) {
+        res.status(401).send("Unauthorized");
+        return;
+    }
 
-	try {
-		const database: Db = await getDatabase();
-		const postsCollection: Collection<Post> = database.collection("Posts");
-		const commentsCollection: Collection<Comment> = database.collection("Comments");
+    try {
+        const database: Db = await getDatabase();
+        const postsCollection: Collection<Post> = database.collection("Posts");
+        const commentsCollection: Collection<Comment> = database.collection("Comments");
 
-		// Ensure post id is valid
-		if (!ObjectId.isValid(req.params.postid)) {
-			res.status(404).send("Invalid post");
-			return;
-		}
+        // Ensure post id is valid
+        if (!ObjectId.isValid(req.params.postid)) {
+            res.status(404).send("Invalid post");
+            return;
+        }
 
-		// Find the post, ensure it's valid
-		let post = await postsCollection.findOne({
-			_id: new ObjectId(req.params.postid)
-		});
-		if (post == null) {
-			res.status(404).send("Invalid post");
-			return;
-		}
+        // Find the post, ensure it's valid
+        let post = await postsCollection.findOne({
+            _id: new ObjectId(req.params.postid)
+        });
+        if (post == null) {
+            res.status(404).send("Invalid post");
+            return;
+        }
 
-		// Create comment
-		let newComment: Comment = {
-			postId: post._id,
-			datePosted: new Date(),
-			authorId: req.user._id,
-			authorName: req.user.username,
-			authorProfilePicture: req.user.profilePictureUrl
-		};
+        // Create comment
+        let newComment: Comment = {
+            postId: post._id,
+            datePosted: new Date(),
+            authorId: req.user._id,
+            authorName: req.user.name, // Changed from username to name
+            authorProfilePicture: req.user.profilePictureUrl,
+            comment: req.body.content // Changed to match frontend's field name
+        };
 
-		// Transfer properties of comment to the newcomment
-		for (let property in req.body) {
-			if (!newComment[property]) {
-				newComment[property] = req.body[property];
-			}
-		}
+        // No need for property transfer or schema validation for now
+        let commentInsertion = await commentsCollection.insertOne(newComment);
 
-		// Schema check
-		let result = postSchema.safeParse(newComment);
+        res.status(201).send({ 
+            commentId: commentInsertion.insertedId,
+            comment: newComment 
+        });
 
-		if (!result.success) {
-			res.status(400).send('Invalid comment');
-			return;
-		}
-
-		let commentData: Comment = result.data;
-		let commentInsertion = await commentsCollection.insertOne(commentData);
-
-		res.status(201).send({ commentId: commentInsertion.insertedId });
-
-	} catch (error) {
-		console.error(error);
-		res.status(500).send("Internal error");
-	}
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Internal error");
+    }
 });
 
 /** 

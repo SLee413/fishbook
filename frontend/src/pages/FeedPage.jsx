@@ -18,6 +18,197 @@ const getWeatherIcon = (code) => {
   return icons[code] || "❓";
 };
 
+const CommentSection = ({ postId }) => {
+  const [comments, setComments] = useState([]);
+  const [commentCount, setCommentCount] = useState(0);
+  const [newComment, setNewComment] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+
+  // Fetch comment count on initial load
+  useEffect(() => {
+    fetchCommentCount();
+  }, [postId]);
+
+  const fetchCommentCount = async () => {
+    try {
+      const response = await fetch(`/api/posts/${postId}/comments`);
+      const data = await response.json();
+      setCommentCount(data.comments?.length || 0);
+    } catch (error) {
+      console.error('Failed to fetch comment count:', error);
+    }
+  };
+
+  const fetchComments = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/posts/${postId}/comments`);
+      const data = await response.json();
+      setComments(data.comments || []);
+      setCommentCount(data.comments?.length || 0);
+    } catch (error) {
+      console.error('Failed to fetch comments:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmitComment = async (e) => {
+    e.preventDefault();
+    
+    if (!newComment.trim()) return;
+    
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+      alert('Please login to comment');
+      return;
+    }
+    
+    try {
+      const response = await fetch(`/api/posts/${postId}/comments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ content: newComment }), // Change 'comment' to 'content'
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Comment posted successfully:', data);
+        setNewComment('');
+        fetchComments();
+      } else {
+        const errorData = await response.json();
+        alert(errorData.message || 'Failed to post comment');
+      }
+    } catch (error) {
+      console.error('Failed to post comment:', error);
+      alert('Failed to post comment. Please try again.');
+    }
+  };
+
+  // Toggle comments visibility and fetch if needed
+  const toggleComments = () => {
+    if (!showComments && comments.length === 0) {
+      fetchComments();
+    }
+    setShowComments(!showComments);
+  };
+
+  return (
+    <div style={{ marginTop: '20px', borderTop: '1px solid #eee', paddingTop: '10px' }}>
+      <button 
+        onClick={toggleComments} 
+        style={{
+          background: 'none',
+          border: 'none',
+          color: '#1e3a8a',
+          cursor: 'pointer',
+          fontWeight: 'bold',
+          padding: '5px 0',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '5px'
+        }}
+      >
+        <span>
+          {showComments ? 'Hide Comments' : 'Show Comments'}
+        </span>
+        <span style={{ 
+          backgroundColor: '#eee', 
+          padding: '2px 8px', 
+          borderRadius: '10px', 
+          fontSize: '0.8em'
+        }}>
+          {commentCount}
+        </span>
+      </button>
+      
+      {showComments && (
+        <div>
+          {loading ? (
+            <p>Loading comments...</p>
+          ) : (
+            <>
+              {comments.length === 0 ? (
+                <p style={{ color: '#666', fontStyle: 'italic' }}>No comments yet</p>
+              ) : (
+                <div style={{ maxHeight: '300px', overflowY: 'auto', marginBottom: '15px' }}>
+                  {comments.map((comment) => (
+                    <div 
+                      key={comment._id} 
+                      style={{ 
+                        padding: '10px', 
+                        borderBottom: '1px solid #eee',
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: '10px'
+                      }}
+                    >
+                      {comment.authorProfilePicture && (
+                        <img 
+                          src={comment.authorProfilePicture} 
+                          alt={comment.authorName} 
+                          style={{
+                            width: '35px',
+                            height: '35px',
+                            borderRadius: '50%',
+                            objectFit: 'cover'
+                          }}
+                        />
+                      )}
+                      <div>
+                        <div style={{ fontWeight: 'bold' }}>{comment.authorName}</div>
+                        <div>{comment.comment}</div>
+                        <div style={{ fontSize: '12px', color: '#666' }}>
+                          {new Date(comment.datePosted).toLocaleString()}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              <form onSubmit={handleSubmitComment} style={{ display: 'flex', gap: '10px' }}>
+                <input
+                  type="text"
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  placeholder="Add a comment..."
+                  style={{
+                    flex: 1,
+                    padding: '8px 12px',
+                    borderRadius: '20px',
+                    border: '1px solid #ccc',
+                    outline: 'none',
+                  }}
+                />
+                <button 
+                  type="submit"
+                  style={{
+                    backgroundColor: '#1e3a8a',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '20px',
+                    padding: '8px 16px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Post
+                </button>
+              </form>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const FeedPage = () => {
   const [posts, setPosts] = useState([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -220,6 +411,9 @@ const FeedPage = () => {
               <p style={{ fontStyle: 'italic', marginTop: '10px' }}>
                 Posted on {formatDate(post.datePosted)}
               </p>
+              
+              {/* Comments Section */}
+              <CommentSection postId={post._id} />
             </div>
           </div>
         ))
