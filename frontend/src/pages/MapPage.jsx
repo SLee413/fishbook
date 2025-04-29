@@ -57,31 +57,45 @@ const MapPage = () => {
   const mapRef = useRef(null);
   const [forecast, setForecast] = useState(null);
   const [userForecast, setUserForecast] = useState(null);
+  const [waterFilter, setWaterFilter] = useState('all');
+  const markersRef = useRef([]); // Use ref to store markers
+  const [userLocation, setUserLocation] = useState(null); // Store user's location
 
+  // Helper to clear markers from map
+  const clearMarkers = () => {
+    markersRef.current.forEach(marker => marker.remove());
+    markersRef.current = [];
+  };
 
-  useEffect(() => {
-    if (!mapRef.current) {
-      const map = L.map('map').setView([40.0583, -74.4057], 8);
-      mapRef.current = map;
+  // Function to center map on user's location
+  const centerOnUser = () => {
+    if (userLocation) {
+      mapRef.current.setView([userLocation.lat, userLocation.lng], 12);
+    } else {
+      navigator.geolocation.getCurrentPosition(
+        position => {
+          const { latitude, longitude } = position.coords;
+          setUserLocation({ lat: latitude, lng: longitude });
+          mapRef.current.setView([latitude, longitude], 12);
+        },
+        error => {
+          console.error("Error getting location:", error);
+          alert("Unable to access your location. Please enable location services.");
+        }
+      );
+    }
+  };
 
-      navigator.geolocation.getCurrentPosition(async (position) => {
-        const { latitude, longitude } = position.coords;
-        const weather = await fetchHourlyForecast(latitude, longitude);
-        setUserForecast(weather);
-      });
-      
-
-
-
-
-
-
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-
-      // 🐟 Fetch pins
-      fetch('/api/posts')
-        .then(res => res.json())
-        .then(data => {
+  // Fetch and display pins based on filter
+  const fetchPosts = () => {
+    clearMarkers();
+    const url = waterFilter === 'all'
+      ? '/api/posts'
+      : `/api/posts?filterWaterType=${waterFilter}`;
+    fetch(url)
+      .then(res => res.json())
+      .then(data => {
+        if (data.posts && data.posts.length > 0) {
           data.posts.forEach(post => {
             if (post.location?.lat && post.location?.lng) {
               const weather = post.weather || {};
@@ -99,23 +113,40 @@ const MapPage = () => {
                 💧 <strong>Precip:</strong> ${weather.precipitation ?? "?"} in<br/>
                 🌬️ <strong>Wind:</strong> ${weather.windspeed ?? "?"} mph<br/>
               `;
-              L.marker([post.location.lat, post.location.lng])
-                .addTo(map)
+              const marker = L.marker([post.location.lat, post.location.lng])
+                .addTo(mapRef.current)
                 .bindPopup(popupContent);
+              markersRef.current.push(marker);
             }
           });
-        });
+        }
+      });
+  };
 
-      // 📅 Left-click: current & hourly forecast in sidebar
+  useEffect(() => {
+    if (!mapRef.current) {
+      const map = L.map('map').setView([40.0583, -74.4057], 8);
+
+      navigator.geolocation.getCurrentPosition(async (position) => {
+        const { latitude, longitude } = position.coords;
+        setUserLocation({ lat: latitude, lng: longitude });
+        const weather = await fetchHourlyForecast(latitude, longitude);
+        setUserForecast(weather);
+      });
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
       map.on('click', async (e) => {
         const { lat, lng } = e.latlng;
         const weather = await fetchHourlyForecast(lat, lng);
         setForecast(weather);
       });
+
+      mapRef.current = map;
     }
-  }, []);
-
-
+    fetchPosts();
+    // eslint-disable-next-line
+  }, [waterFilter]);
 
   function getPrecipIcon(code) {
     if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(code)) return "🌧️ Rain:";
@@ -125,8 +156,6 @@ const MapPage = () => {
     return "💧None:"; // Fallback label
   }
   
-
-
   // Fetches moon phase data
   async function fetchMoonPhase(date) {
     const timestamp = Math.floor(date.getTime() / 1000);
@@ -140,7 +169,6 @@ const MapPage = () => {
     }
   }
 
-
   const fetchHourlyForecast = async (lat, lng) => {
     const today = new Date().toISOString().split("T")[0];
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current_weather=true&hourly=temperature_2m,precipitation,windspeed_10m,weathercode&temperature_unit=fahrenheit&precipitation_unit=inch&windspeed_unit=mph&timezone=America%2FNew_York&start_date=${today}&end_date=${today}`;
@@ -151,7 +179,6 @@ const MapPage = () => {
     const currentHourIndex = data.hourly.time.findIndex(t => new Date(t).getHours() === now.getHours());
 
     let moonData = await fetchMoonPhase(now);
-
 
     return {
       current: {
@@ -172,39 +199,70 @@ const MapPage = () => {
     };
   };
 
- 
   return (
     <div style={{ display: 'flex', height: '100vh' }}>
-      
-      {/* MAP with Your Weather floating in top-right corner */}
       <div id="map" style={{ position: 'relative', flex: 3 }}>
-        {userForecast && (
-          <div style={{
-            position: 'absolute',
-            top: '10px',
-            right: '10px',
-            background: 'white',
-            padding: '10px 15px',
-            borderRadius: '10px',
-            boxShadow: '0 0 10px rgba(0,0,0,0.2)',
-            zIndex: 1000,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '15px',
-            fontSize: '14px',
-            maxWidth: '600px',
-            flexWrap: 'wrap'
-          }}>
-            <span><strong>📍 Your Weather:</strong></span>
-            <span>{getWeatherIcon(userForecast.current.weathercode)} {userForecast.current.temperature}°F</span>
-            <span>{getPrecipIcon(userForecast.hourly[userForecast.indexNow]?.weathercode)} {userForecast.hourly[userForecast.indexNow]?.precipitation} in</span>
-            <span>🌬️ Wind: {userForecast.current.windspeed} mph</span>
-            <span>{moonPhaseIcons[userForecast.current.moonPhase] || "🌕"} {userForecast.current.moonPhase}</span>
-          </div>
-        )}
+        <div style={{
+          position: 'absolute',
+          top: '10px',
+          right: '10px',
+          background: 'white',
+          padding: '10px 15px',
+          borderRadius: '10px',
+          boxShadow: '0 0 10px rgba(0,0,0,0.2)',
+          zIndex: 1000,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '15px',
+          fontSize: '14px',
+          maxWidth: '600px',
+          flexWrap: 'wrap'
+        }}>
+          <select
+            value={waterFilter}
+            onChange={e => setWaterFilter(e.target.value)}
+            style={{
+              padding: '5px',
+              borderRadius: '5px',
+              border: '1px solid #ccc',
+              marginRight: '10px'
+            }}
+          >
+            <option value="all">All Waters</option>
+            <option value="Fresh">Freshwater</option>
+            <option value="Salt">Saltwater</option>
+          </select>
+
+          {/* Add the recenter button */}
+          <button
+            onClick={centerOnUser}
+            style={{
+              padding: '5px 10px',
+              borderRadius: '5px',
+              backgroundColor: '#1e88e5',
+              color: 'white',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            📍 My Location
+          </button>
+
+          {userForecast && (
+            <>
+              <span><strong>📍 Your Weather:</strong></span>
+              <span>{getWeatherIcon(userForecast.current.weathercode)} {userForecast.current.temperature}°F</span>
+              <span>{getPrecipIcon(userForecast.hourly[userForecast.indexNow]?.weathercode)} {userForecast.hourly[userForecast.indexNow]?.precipitation} in</span>
+              <span>🌬️ Wind: {userForecast.current.windspeed} mph</span>
+              <span>{moonPhaseIcons[userForecast.current.moonPhase] || "🌕"} {userForecast.current.moonPhase}</span>
+            </>
+          )}
+        </div>
       </div>
-  
-  
+      
       {/* SIDEBAR – Clicked Forecast */}
       <aside style={{
         flex: 1,
@@ -219,7 +277,7 @@ const MapPage = () => {
             <p>{getWeatherIcon(forecast.current.weathercode)} {forecast.current.temperature}°F</p>
             <p>{getPrecipIcon(forecast.hourly[forecast.indexNow]?.weathercode)} {forecast.hourly[forecast.indexNow]?.precipitation} in</p>
             <p>🌬️ Wind: {forecast.current.windspeed} mph</p>
-  
+
             <h4>⏱ Hourly Forecast</h4>
             <ul style={{ paddingLeft: 0, listStyle: 'none' }}>
               {forecast.hourly
@@ -229,7 +287,7 @@ const MapPage = () => {
                     <strong>{hour.label}</strong>: {getWeatherIcon(hour.weathercode)} {hour.temperature}°F,
                     {getPrecipIcon(hour.weathercode)} {hour.precipitation} in, 🌬️ {hour.windspeed} mph
                   </li>
-              ))}
+                ))}
             </ul>
           </div>
         ) : (
@@ -238,9 +296,6 @@ const MapPage = () => {
       </aside>
     </div>
   );
-  
-  
-  
 };
 
 export default MapPage;
