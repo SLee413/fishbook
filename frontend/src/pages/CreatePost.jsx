@@ -209,7 +209,7 @@ const CreatePost = () => {
         }}>
           {/* Upload Image */}
           <div>
-            <label style={{ fontWeight: 'bold' }}>Upload Image:</label>
+          <label style={{ fontWeight: 'bold', color: '#1e3a8a' }}>Upload Image:</label>
             <input
               type="file"
               accept="image/*"
@@ -234,7 +234,7 @@ const CreatePost = () => {
 
           {/* Date Caught */}
           <div>
-            <label style={{ fontWeight: 'bold' }}>Date Caught:</label>
+            <label style={{ fontWeight: 'bold', color: '#1e3a8a' }}>Date Caught:</label>
             <div style={{ display: 'flex', gap: '10px' }}>
               <select value={month} onChange={(e) => setMonth(e.target.value)} style={{ flex: 1 }}>
                 <option value="">Month</option>
@@ -259,7 +259,7 @@ const CreatePost = () => {
 
           {/* Fish Type */}
           <div>
-            <label style={{ fontWeight: 'bold' }}>Fish Type:</label>
+            <label style={{ fontWeight: 'bold', color: '#1e3a8a' }}>Fish Type:</label>
             <input
               type="text"
               value={fishType}
@@ -271,7 +271,7 @@ const CreatePost = () => {
 
           {/* Description */}
           <div>
-            <label style={{ fontWeight: 'bold' }}>Description:</label>
+            <label style={{ fontWeight: 'bold', color: '#1e3a8a' }}>Description:</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -283,7 +283,7 @@ const CreatePost = () => {
 
           {/* Bait */}
           <div>
-            <label style={{ fontWeight: 'bold' }}>Bait:</label>
+            <label style={{ fontWeight: 'bold', color: '#1e3a8a' }}>Bait:</label>
             <input
               type="text"
               value={bait}
@@ -295,7 +295,7 @@ const CreatePost = () => {
 
           {/* Water Type */}
           <div>
-            <label style={{ fontWeight: 'bold' }}>Water Type:</label>
+            <label style={{ fontWeight: 'bold', color: '#1e3a8a' }}>Water Type:</label>
             <select
               value={waterType}
               onChange={(e) => setWaterType(e.target.value)}
@@ -309,7 +309,7 @@ const CreatePost = () => {
 
           {/* Weight */}
           <div>
-            <label style={{ fontWeight: 'bold' }}>Weight:</label>
+            <label style={{ fontWeight: 'bold', color: '#1e3a8a' }}>Weight:</label>
             <div style={{ display: 'flex', gap: '10px' }}>
               <input
                 type="number"
@@ -330,7 +330,7 @@ const CreatePost = () => {
 
           {/* Length */}
           <div>
-            <label style={{ fontWeight: 'bold' }}>Length:</label>
+            <label style={{ fontWeight: 'bold', color: '#1e3a8a' }}>Length:</label>
             <div style={{ display: 'flex', gap: '10px' }}>
               <input
                 type="number"
