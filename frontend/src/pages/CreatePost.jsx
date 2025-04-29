@@ -23,11 +23,25 @@ const CreatePost = () => {
   const [lengthUnit, setLengthUnit] = useState('in');
   const [bait, setBait] = useState('');
   const [waterType, setWaterType] = useState('');
-  const [month, setMonth] = useState('');
-  const [day, setDay] = useState('');
-  const [year, setYear] = useState('');
+  //const [month, setMonth] = useState('');
+  //const [day, setDay] = useState('');
+  //const [year, setYear] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
+  const [dateTimeCaught, setDateTimeCaught] = useState(() => {
+    const now = new Date();
+    now.setSeconds(0, 0); // Round seconds/milliseconds to 0
+  
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0'); // Month is 0-based
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+  
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  });
+  
+  
 
   const mapRef = useRef(null);
   const markerRef = useRef(null);
@@ -98,8 +112,22 @@ const CreatePost = () => {
   }
 
   async function fetchWeather(lat, lng, datetime) {
+    const selectedDate = new Date(datetime);
+    const now = new Date();
+  
     const hour = parseInt(datetime.split("T")[1].split(":")[0]);
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&hourly=temperature_2m,precipitation,weathercode,windspeed_10m&temperature_unit=fahrenheit&precipitation_unit=inch&windspeed_unit=mph&timezone=America%2FNew_York`;
+  
+    let url = '';
+  
+    if (selectedDate < now) {
+      // Past date: use historical weather
+      const startDate = datetime.split('T')[0];
+      url = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lng}&start_date=${startDate}&end_date=${startDate}&hourly=temperature_2m,precipitation,weathercode,windspeed_10m&temperature_unit=fahrenheit&precipitation_unit=inch&windspeed_unit=mph&timezone=America%2FNew_York`;
+    } else {
+      // Future or today: use forecast weather
+      url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&hourly=temperature_2m,precipitation,weathercode,windspeed_10m&temperature_unit=fahrenheit&precipitation_unit=inch&windspeed_unit=mph&timezone=America%2FNew_York`;
+    }
+  
     try {
       const res = await fetch(url);
       const data = await res.json();
@@ -114,6 +142,7 @@ const CreatePost = () => {
       return { temperature: null, precipitation: null, windspeed: null, weathercode: null };
     }
   }
+  
 
   async function fetchMoonPhase(dateStr) {
     const timestamp = Math.floor(new Date(dateStr).getTime() / 1000);
@@ -127,10 +156,12 @@ const CreatePost = () => {
     }
   }
 
+  /*
   const buildCaughtDate = () => {
     if (!month || !day || !year) return null;
     return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T00:00:00`;
   };
+*/
 
   const handlePostSubmit = async (e) => {
     e.preventDefault();
@@ -138,10 +169,11 @@ const CreatePost = () => {
       alert("Please select a pin location on the map.");
       return;
     }
+    /*
     if (!month || !day || !year) {
       alert("Please select month, day, and year for Date Caught.");
       return;
-    }
+    }*/
 
     let imageUrl = "https://example.com/fakeimg.jpg";
     if (selectedFile) {
@@ -151,7 +183,8 @@ const CreatePost = () => {
       }
     }
 
-    const caughtDateStr = buildCaughtDate();
+    const caughtDateStr = dateTimeCaught;
+
     const weather = await fetchWeather(selectedLatLng.lat, selectedLatLng.lng, caughtDateStr);
     const moonPhase = await fetchMoonPhase(caughtDateStr);
 
@@ -232,30 +265,17 @@ const CreatePost = () => {
             )}
           </div>
 
-          {/* Date Caught */}
+          {/* Date & Time Caught */}
           <div>
-            <label style={{ fontWeight: 'bold', color: '#1e3a8a' }}>Date Caught:</label>
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <select value={month} onChange={(e) => setMonth(e.target.value)} style={{ flex: 1 }}>
-                <option value="">Month</option>
-                {[...Array(12)].map((_, i) => (
-                  <option key={i + 1} value={i + 1}>{i + 1}</option>
-                ))}
-              </select>
-              <select value={day} onChange={(e) => setDay(e.target.value)} style={{ flex: 1 }}>
-                <option value="">Day</option>
-                {[...Array(31)].map((_, i) => (
-                  <option key={i + 1} value={i + 1}>{i + 1}</option>
-                ))}
-              </select>
-              <select value={year} onChange={(e) => setYear(e.target.value)} style={{ flex: 1 }}>
-                <option value="">Year</option>
-                {Array.from({ length: 76 }, (_, i) => 1950 + i).map((y) => (
-                  <option key={y} value={y}>{y}</option>
-                ))}
-              </select>
-            </div>
+            <label style={{ fontWeight: 'bold', color: '#1e3a8a' }}>Date & Time Caught:</label>
+            <input
+              type="datetime-local"
+              value={dateTimeCaught}
+              onChange={(e) => setDateTimeCaught(e.target.value)}
+              style={{ width: '100%', padding: '5px', fontSize: '16px' }}
+            />
           </div>
+
 
           {/* Fish Type */}
           <div>
