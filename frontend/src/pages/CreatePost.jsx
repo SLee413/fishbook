@@ -111,36 +111,63 @@ const CreatePost = () => {
     }
   }
 
-  async function fetchWeather(lat, lng, datetime) {
-    const selectedDate = new Date(datetime);
+  function isTodayOrYesterday(dateString) {
+    const selected = new Date(dateString);
     const now = new Date();
   
-    const hour = parseInt(datetime.split("T")[1].split(":")[0]);
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
   
-    let url = '';
+    return (
+      selected.toDateString() === today.toDateString() ||
+      selected.toDateString() === yesterday.toDateString()
+    );
+  }
   
-    if (selectedDate < now) {
-      // Past date: use historical weather
-      const startDate = datetime.split('T')[0];
-      url = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lng}&start_date=${startDate}&end_date=${startDate}&hourly=temperature_2m,precipitation,weathercode,windspeed_10m&temperature_unit=fahrenheit&precipitation_unit=inch&windspeed_unit=mph&timezone=America%2FNew_York`;
-    } else {
-      // Future or today: use forecast weather
-      url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&hourly=temperature_2m,precipitation,weathercode,windspeed_10m&temperature_unit=fahrenheit&precipitation_unit=inch&windspeed_unit=mph&timezone=America%2FNew_York`;
-    }
+  async function fetchWeather(lat, lng, datetime) {
+    const date = datetime.split('T')[0]; // Just YYYY-MM-DD
+    const hour = parseInt(datetime.split("T")[1].split(":")[0], 10);
   
-    try {
-      const res = await fetch(url);
+    let weatherData;
+  
+    if (isTodayOrYesterday(date)) {
+      // 📡 Use forecast for today and yesterday
+      const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&hourly=temperature_2m,precipitation,weathercode,windspeed_10m&temperature_unit=fahrenheit&precipitation_unit=inch&windspeed_unit=mph&timezone=America%2FNew_York`);
       const data = await res.json();
-      return {
-        temperature: data.hourly.temperature_2m?.[hour] ?? null,
-        precipitation: data.hourly.precipitation?.[hour] ?? null,
-        windspeed: data.hourly.windspeed_10m?.[hour] ?? null,
-        weathercode: data.hourly.weathercode?.[hour] ?? null,
+  
+      const todayHours = data.hourly.time
+        .map((t, i) => ({ t, i }))
+        .filter(obj => obj.t.startsWith(date));
+  
+      weatherData = {
+        hours: todayHours.map(h => h.t),
+        temps: todayHours.map(h => data.hourly.temperature_2m[h.i]),
+        precipitation: todayHours.map(h => data.hourly.precipitation[h.i]),
+        windspeed: todayHours.map(h => data.hourly.windspeed_10m[h.i]),
+        codes: todayHours.map(h => data.hourly.weathercode[h.i])
       };
-    } catch (err) {
-      console.error("❌ Failed to fetch weather:", err);
-      return { temperature: null, precipitation: null, windspeed: null, weathercode: null };
+    } else {
+      // 📚 Use archive for older dates
+      const res = await fetch(`https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lng}&start_date=${date}&end_date=${date}&hourly=temperature_2m,precipitation,weathercode,windspeed_10m&temperature_unit=fahrenheit&precipitation_unit=inch&windspeed_unit=mph&timezone=America%2FNew_York`);
+      const data = await res.json();
+  
+      weatherData = {
+        hours: data.hourly.time,
+        temps: data.hourly.temperature_2m,
+        precipitation: data.hourly.precipitation,
+        windspeed: data.hourly.windspeed_10m,
+        codes: data.hourly.weathercode
+      };
     }
+  
+    // Now return the weather data for the right hour
+    return {
+      temperature: weatherData.temps[hour] ?? null,
+      precipitation: weatherData.precipitation[hour] ?? null,
+      windspeed: weatherData.windspeed[hour] ?? null,
+      weathercode: weatherData.codes[hour] ?? null,
+    };
   }
   
 
