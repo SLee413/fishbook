@@ -14,9 +14,11 @@ const AccountPage = ({ user, handleLogout, onUserUpdate }) => {
     password: ''
   });
   const [selectedFile, setSelectedFile] = useState(null);
-  
-  // 🆕 New: Posts state
+  const [previewImage, setPreviewImage] = useState(user?.profilePictureUrl || '/profileImages/default.png');
   const [posts, setPosts] = useState([]);
+  const [comments, setComments] = useState({});
+  const [commentCounts, setCommentCounts] = useState({});
+  const [showComments, setShowComments] = useState({});
 
   useEffect(() => {
     if (user) {
@@ -29,10 +31,10 @@ const AccountPage = ({ user, handleLogout, onUserUpdate }) => {
         password: ''
       });
       setSelectedFile(null);
+      setPreviewImage(user.profilePictureUrl || '/profileImages/default.png');
     }
   }, [user]);
 
-  // 🆕 New: Fetch user's own posts
   useEffect(() => {
     const fetchUserPosts = async () => {
       try {
@@ -43,9 +45,20 @@ const AccountPage = ({ user, handleLogout, onUserUpdate }) => {
             .filter(post => post.authorId === user.userId)
             .sort((a, b) => new Date(b.datePosted) - new Date(a.datePosted));
           setPosts(userPosts);
+
+          const counts = {};
+          const allComments = {};
+          for (const post of userPosts) {
+            const res = await fetch(`/api/posts/${post._id}/comments`);
+            const data = await res.json();
+            counts[post._id] = data.comments?.length || 0;
+            allComments[post._id] = data.comments || [];
+          }
+          setCommentCounts(counts);
+          setComments(allComments);
         }
       } catch (err) {
-        console.error('Error fetching user posts:', err);
+        console.error('Error fetching user posts/comments:', err);
       }
     };
 
@@ -66,9 +79,12 @@ const AccountPage = ({ user, handleLogout, onUserUpdate }) => {
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files.length > 0) {
-      setSelectedFile(e.target.files[0]);
+      const file = e.target.files[0];
+      setSelectedFile(file);
+      setPreviewImage(URL.createObjectURL(file));
     } else {
       setSelectedFile(null);
+      setPreviewImage(user?.profilePictureUrl || '/profileImages/default.png');
     }
   };
 
@@ -122,104 +138,117 @@ const AccountPage = ({ user, handleLogout, onUserUpdate }) => {
     }
   };
 
+  const toggleComments = (postId) => {
+    setShowComments(prev => ({ ...prev, [postId]: !prev[postId] }));
+  };
+
   return (
-    <main style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', gap: '20px' }}>
-        {/* Profile Section */}
-        <div style={{ flex: 1 }}>
-          <img 
-            src={user?.profilePictureUrl || '/profileImages/default.png'} 
-            alt="Profile" 
-            style={{ width: '150px', height: '150px', borderRadius: '50%', objectFit: 'cover' }} 
+    <main style={{ padding: '20px 40px', maxWidth: '1400px', margin: '0 auto' }}>
+      <div style={{ display: 'flex', gap: '40px', alignItems: 'flex-start' }}>
+        <div style={{ flex: 1, textAlign: 'center' }}>
+          <img
+            src={previewImage}
+            alt="Profile"
+            style={{ width: '150px', height: '150px', borderRadius: '50%', objectFit: 'cover' }}
           />
           <h2>{user?.username}'s Profile</h2>
           <p><strong>Member Since:</strong> {user?.memberSince}</p>
           <p><strong>Bio:</strong> {user?.bio || 'No bio yet'}</p>
           <p><strong>Total Posts:</strong> {posts?.length || 0}</p>
 
-          <div className={styles['account-buttons']}>
-            <button className={styles['edit-button']} onClick={() => setEditMode(true)}>
-              Edit Profile
-            </button>
-            <button className={styles['logout-button']} onClick={handleLogout}>
-              Logout
-            </button>
+          <div className={styles['account-buttons']} style={{ justifyContent: 'center' }}>
+            {!editMode && (
+              <button className={styles['edit-button']} onClick={() => setEditMode(true)}>Edit Profile</button>
+            )}
+            {editMode && (
+              <button className={styles['logout-button']} onClick={() => setEditMode(false)}>Cancel</button>
+            )}
+            <button className={styles['logout-button']} onClick={onLogoutClick}>Logout</button>
           </div>
         </div>
 
-        {/* Posts Section */}
-        <div style={{ flex: 2 }}>
-          <h3>Posts</h3>
-          {posts.length === 0 ? (
-            <p>No posts yet.</p>
+        <div style={{ flex: 3 }}>
+          {!editMode && <h3>Posts</h3>}
+          {editMode ? (
+            <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <h3>Edit Profile</h3>
+
+              <label className={styles['edit-label']}>First Name</label>
+              <input name="firstName" value={editData.firstName} onChange={handleChangeEdit} className={styles['account-field']} />
+
+              <label className={styles['edit-label']}>Last Name</label>
+              <input name="lastName" value={editData.lastName} onChange={handleChangeEdit} className={styles['account-field']} />
+
+              <label className={styles['edit-label']}>Username</label>
+              <input name="username" value={editData.username} onChange={handleChangeEdit} className={styles['account-field']} />
+
+              <label className={styles['edit-label']}>Email</label>
+              <input name="email" value={editData.email} onChange={handleChangeEdit} className={styles['account-field']} />
+
+              <label className={styles['edit-label']}>Password</label>
+              <input name="password" type="password" value={editData.password} onChange={handleChangeEdit} className={styles['account-field']} />
+
+              <label className={styles['edit-label']}>Bio</label>
+              <input name="bio" value={editData.bio} onChange={handleChangeEdit} className={styles['account-field']} />
+
+              <label className={styles['edit-label']}>Profile Picture</label>
+              <input name="profilePicture" type="file" onChange={handleFileChange} className={styles['account-field']} />
+
+              <button type="submit" className={styles['edit-button']}>Save Changes</button>
+            </form>
           ) : (
-            posts.map(post => (
-              <div key={post._id} style={{
-                border: '1px solid #ccc',
-                padding: '15px',
-                marginBottom: '15px',
-                borderRadius: '8px'
-              }}>
-                {post.imageUrl && (
-                  <img 
-                    src={post.imageUrl} 
-                    alt="Catch" 
-                    style={{ 
-                      width: '100%', 
-                      maxHeight: '300px',
-                      objectFit: 'cover',
-                      borderRadius: '4px',
-                      marginBottom: '10px'
-                    }} 
+            posts.length === 0 ? <p>No posts yet.</p> : posts.map(post => (
+              <div key={post._id} style={{ border: '1px solid #ddd', padding: '20px', marginBottom: '25px', borderRadius: '12px', backgroundColor: '#fff' }}>
+                <div style={{ display: 'flex', gap: '20px' }}>
+                  <img
+                    src={post.imageUrl}
+                    alt="Catch"
+                    style={{ width: '450px', height: '450px', objectFit: 'cover', borderRadius: '8px' }}
                   />
-                )}
-                <p><strong>🐟 Fish:</strong> {post.species}</p>
-                <p><strong>📝 Description:</strong> {post.description}</p>
-                <p><strong>📅 Date:</strong> {new Date(post.dateCaught).toLocaleDateString()}</p>
-                {post.waterType && <p><strong>💧 Water:</strong> {post.waterType}</p>}
-                {post.bait && <p><strong>🪱 Bait:</strong> {post.bait}</p>}
-                {post.weight && (
-                  <p><strong>⚖️ Weight:</strong> {post.weight} {post.weightUnit || "lbs"}</p>
-                )}
-                {post.length && (
-                  <p><strong>📏 Length:</strong> {post.length} {post.lengthUnit || "in"}</p>
+                  <div style={{ flex: 1 }}>
+                    <p><strong>🐟 Fish:</strong> {post.species}</p>
+                    <p><strong>📝 Description:</strong> {post.description}</p>
+                    {post.bait && <p><strong>🪱 Bait:</strong> {post.bait}</p>}
+                    {post.waterType && <p><strong>💧 Water:</strong> {post.waterType}</p>}
+                    {post.weight && <p><strong>⚖️ Weight:</strong> {post.weight} {post.weightUnit || 'lbs'}</p>}
+                    {post.length && <p><strong>📏 Length:</strong> {post.length} {post.lengthUnit || 'in'}</p>}
+                    {post.dateCaught && <p><strong>🕒 Caught:</strong> {new Date(post.dateCaught).toLocaleDateString()}</p>}
+                    {post.moonPhase && <p><strong>🌙 Moon:</strong> {post.moonPhase}</p>}
+                    {post.weather && (
+                      <>
+                        <p><strong>🌡️ Temp:</strong> {post.weather.temperature ?? '?'}°F</p>
+                        <p><strong>💧 Precip:</strong> {post.weather.precipitation ?? '?'} in</p>
+                        <p><strong>🌬️ Wind:</strong> {post.weather.windspeed ?? '?'} mph</p>
+                      </>
+                    )}
+                    <p style={{ fontStyle: 'italic' }}>Posted on {new Date(post.datePosted).toLocaleDateString()}</p>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '10px' }}>
+                  <span>❤️ {post.likes || 0}</span>
+                  <button onClick={() => toggleComments(post._id)} style={{ background: 'none', border: 'none', color: '#1e3a8a', cursor: 'pointer' }}>
+                    {showComments[post._id] ? 'Hide Comments' : 'Show Comments'}
+                  </button>
+                  <span>💬 {commentCounts[post._id] || 0}</span>
+                </div>
+                {showComments[post._id] && (
+                  <div style={{ borderTop: '1px solid #eee', marginTop: '10px', paddingTop: '10px' }}>
+                    {comments[post._id]?.length === 0 ? (
+                      <p style={{ fontStyle: 'italic', color: '#666' }}>No comments yet</p>
+                    ) : (
+                      comments[post._id]?.map(comment => (
+                        <div key={comment._id} style={{ marginBottom: '8px' }}>
+                          <strong>{comment.authorName}</strong>: {comment.comment}
+                          <div style={{ fontSize: '12px', color: '#999' }}>{new Date(comment.datePosted).toLocaleString()}</div>
+                        </div>
+                      ))
+                    )}
+                  </div>
                 )}
               </div>
             ))
           )}
         </div>
-
-        {/* Edit Profile Modal/Form */}
-        {editMode && (
-          <div style={{
-            position: 'fixed',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            backgroundColor: 'white',
-            padding: '20px',
-            borderRadius: '8px',
-            boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-            zIndex: 1000,
-            maxWidth: '500px',
-            width: '90%'
-          }}>
-            <h3>Edit Profile</h3>
-            <form onSubmit={handleSave}>
-              {/* ...existing edit form fields... */}
-              <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-                <button type="submit" className={styles['edit-button']}>Save</button>
-                <button 
-                  type="button" 
-                  onClick={() => setEditMode(false)}
-                  className={styles['logout-button']}
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
       </div>
     </main>
   );
