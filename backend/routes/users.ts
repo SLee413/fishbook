@@ -82,6 +82,30 @@ router.get('/:userid', async (req: AuthRequest, res: Response) => {
   }
 });
 
+router.get('/byUsername/:username', async (req: Request, res: Response) => {
+  try {
+    const database: Db = await getDatabase();
+    const usersCollection: Collection<User> = database.collection("Users");
+
+    const user = await usersCollection.findOne({ name: req.params.username });
+
+    if (!user) {
+      res.status(404).send("User not found");
+      return;
+    }
+
+    // Remove sensitive data
+    if (user.password) {
+      delete user.password;
+    }
+
+    res.send(user);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Internal error");
+  }
+});
+
 /**
  * Update user (profile editing)
  */

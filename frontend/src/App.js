@@ -7,6 +7,7 @@ import MapPage from './pages/MapPage';
 import CreatePost from './pages/CreatePost';
 import LoginPage from './pages/LoginPage';
 import CreateAccountPage from './pages/CreateAccountPage';
+import ProfilePage from './pages/ProfilePage'; // Add this import
 
 import Header from './components/Header';
 
@@ -107,6 +108,7 @@ const App = () => {
         />
         <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
         <Route path="/create-account" element={<CreateAccountPage onLogin={handleLogin} />} />
+        <Route path="/profile/:username" element={<ProfilePage />} /> {/* Add this line */}
       </Routes>
     </Router>
   );

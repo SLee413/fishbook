@@ -123,96 +123,103 @@ const AccountPage = ({ user, handleLogout, onUserUpdate }) => {
   };
 
   return (
-    <main className={styles['account-page']}>
-      <div style={{ display: 'flex', gap: '20px', padding: '20px' }}>
-        
-        {/* Left side - Profile Info */}
-        <div style={{ flex: 1, minWidth: '300px' }}>
-          <h2 className={styles['account-title']}>My Account</h2>
+    <main style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
+      <div style={{ display: 'flex', gap: '20px' }}>
+        {/* Profile Section */}
+        <div style={{ flex: 1 }}>
+          <img 
+            src={user?.profilePictureUrl || '/profileImages/default.png'} 
+            alt="Profile" 
+            style={{ width: '150px', height: '150px', borderRadius: '50%', objectFit: 'cover' }} 
+          />
+          <h2>{user?.username}'s Profile</h2>
+          <p><strong>Member Since:</strong> {user?.memberSince}</p>
+          <p><strong>Bio:</strong> {user?.bio || 'No bio yet'}</p>
+          <p><strong>Total Posts:</strong> {posts?.length || 0}</p>
 
-          {user ? (
-            editMode ? (
-              <form className={styles['account-info']} onSubmit={handleSave}>
-                {/* (All your edit form fields stay the same) */}
-                {/* ... */}
-              </form>
-            ) : (
-              <div className={styles['account-info']}>
-                {/* (Your display profile fields stay the same) */}
-                <div className={styles['profile-picture-wrapper']}>
-                  <img
-                    src={user.profilePictureUrl 
-                      ? user.profilePictureUrl.startsWith('/uploads/')
-                        ? user.profilePictureUrl
-                        : user.profilePictureUrl
-                      : '/profileImages/default.png'}
-                    alt="Profile"
-                    className={styles['profile-picture']}
-                  />
-                </div>
-                <div className={styles['account-field']}>
-                  <span className={styles['field-label']}>Username:</span> {user.username}
-                </div>
-                <div className={styles['account-field']}>
-                  <span className={styles['field-label']}>First Name:</span> {user.firstName || 'N/A'}
-                </div>
-                <div className={styles['account-field']}>
-                  <span className={styles['field-label']}>Last Name:</span> {user.lastName || 'N/A'}
-                </div>
-                <div className={styles['account-field']}>
-                  <span className={styles['field-label']}>Email:</span> {user.email}
-                </div>
-                <div className={styles['account-field']}>
-                  <span className={styles['field-label']}>Bio:</span> {user.bio || 'N/A'}
-                </div>
-                <div className={styles['account-field']}>
-                  <span className={styles['field-label']}>Member Since:</span> {user.memberSince}
-                </div>
-
-                <div className={styles['account-buttons']}>
-                  <button
-                    className={styles['edit-button']}
-                    onClick={() => setEditMode(true)}
-                  >
-                    Edit Profile
-                  </button>
-                  <button
-                    className={styles['logout-button']}
-                    onClick={onLogoutClick}
-                  >
-                    Logout
-                  </button>
-                </div>
-              </div>
-            )
-          ) : (
-            <p>No user information available.</p>
-          )}
+          <div className={styles['account-buttons']}>
+            <button className={styles['edit-button']} onClick={() => setEditMode(true)}>
+              Edit Profile
+            </button>
+            <button className={styles['logout-button']} onClick={handleLogout}>
+              Logout
+            </button>
+          </div>
         </div>
 
-        {/* Right side - User's Posts */}
+        {/* Posts Section */}
         <div style={{ flex: 2 }}>
-          <h2 style={{ marginBottom: '20px' }}>My Posts</h2>
-
+          <h3>Posts</h3>
           {posts.length === 0 ? (
-            <p>You have no posts yet.</p>
+            <p>No posts yet.</p>
           ) : (
             posts.map(post => (
               <div key={post._id} style={{
                 border: '1px solid #ccc',
                 padding: '15px',
                 marginBottom: '15px',
-                borderRadius: '8px',
-                backgroundColor: '#f9f9f9'
+                borderRadius: '8px'
               }}>
-                <p><strong>Fish:</strong> {post.species}</p>
-                <p><strong>Description:</strong> {post.description}</p>
-                <p><strong>Date:</strong> {new Date(post.dateCaught).toLocaleDateString()}</p>
+                {post.imageUrl && (
+                  <img 
+                    src={post.imageUrl} 
+                    alt="Catch" 
+                    style={{ 
+                      width: '100%', 
+                      maxHeight: '300px',
+                      objectFit: 'cover',
+                      borderRadius: '4px',
+                      marginBottom: '10px'
+                    }} 
+                  />
+                )}
+                <p><strong>🐟 Fish:</strong> {post.species}</p>
+                <p><strong>📝 Description:</strong> {post.description}</p>
+                <p><strong>📅 Date:</strong> {new Date(post.dateCaught).toLocaleDateString()}</p>
+                {post.waterType && <p><strong>💧 Water:</strong> {post.waterType}</p>}
+                {post.bait && <p><strong>🪱 Bait:</strong> {post.bait}</p>}
+                {post.weight && (
+                  <p><strong>⚖️ Weight:</strong> {post.weight} {post.weightUnit || "lbs"}</p>
+                )}
+                {post.length && (
+                  <p><strong>📏 Length:</strong> {post.length} {post.lengthUnit || "in"}</p>
+                )}
               </div>
             ))
           )}
         </div>
 
+        {/* Edit Profile Modal/Form */}
+        {editMode && (
+          <div style={{
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            backgroundColor: 'white',
+            padding: '20px',
+            borderRadius: '8px',
+            boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+            zIndex: 1000,
+            maxWidth: '500px',
+            width: '90%'
+          }}>
+            <h3>Edit Profile</h3>
+            <form onSubmit={handleSave}>
+              {/* ...existing edit form fields... */}
+              <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+                <button type="submit" className={styles['edit-button']}>Save</button>
+                <button 
+                  type="button" 
+                  onClick={() => setEditMode(false)}
+                  className={styles['logout-button']}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
       </div>
     </main>
   );

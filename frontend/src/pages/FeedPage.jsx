@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom'; 
 
 const getWeatherIcon = (code) => {
   const icons = {
@@ -24,6 +25,7 @@ const CommentSection = ({ postId }) => {
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(false);
   const [showComments, setShowComments] = useState(false);
+  const navigate = useNavigate();
 
   // Fetch comment count on initial load
   useEffect(() => {
@@ -99,6 +101,11 @@ const CommentSection = ({ postId }) => {
     setShowComments(!showComments);
   };
 
+  // Handle profile navigation when clicking on a username
+  const handleProfileClick = (username) => {
+    navigate(`/profile/${username}`);
+  };
+
   return (
     <div style={{ marginTop: '20px', borderTop: '1px solid #eee', paddingTop: '10px' }}>
       <button 
@@ -157,12 +164,24 @@ const CommentSection = ({ postId }) => {
                             width: '35px',
                             height: '35px',
                             borderRadius: '50%',
-                            objectFit: 'cover'
+                            objectFit: 'cover',
+                            cursor: 'pointer'
                           }}
+                          onClick={() => handleProfileClick(comment.authorName)}
                         />
                       )}
                       <div>
-                        <div style={{ fontWeight: 'bold' }}>{comment.authorName}</div>
+                        <div 
+                          style={{ 
+                            fontWeight: 'bold', 
+                            cursor: 'pointer',
+                            color: '#1e3a8a',
+                            textDecoration: 'underline'
+                          }}
+                          onClick={() => handleProfileClick(comment.authorName)}
+                        >
+                          {comment.authorName}
+                        </div>
                         <div>{comment.comment}</div>
                         <div style={{ fontSize: '12px', color: '#666' }}>
                           {new Date(comment.datePosted).toLocaleString()}
@@ -212,6 +231,7 @@ const CommentSection = ({ postId }) => {
 const FeedPage = () => {
   const [posts, setPosts] = useState([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const navigate = useNavigate(); 
 
   useEffect(() => {
     // Check if user is logged in
@@ -298,6 +318,11 @@ const FeedPage = () => {
     }
   };
 
+  // Handle profile navigation when clicking on a username
+  const handleProfileClick = (username) => {
+    navigate(`/profile/${username}`);
+  };
+
   return (
     <main style={{ padding: '20px' }}>
       {posts.length === 0 ? (
@@ -336,11 +361,24 @@ const FeedPage = () => {
                       height: '50px',
                       borderRadius: '50%',
                       objectFit: 'cover',
-                      border: '2px solid #ccc'
+                      border: '2px solid #ccc',
+                      cursor: 'pointer'
                     }}
+                    onClick={() => handleProfileClick(post.authorName)}
+                    title={`View ${post.authorName}'s profile`}
                   />
                 )}
-                <span style={{ fontWeight: 'bold', fontSize: '18px' }}>
+                <span
+                  style={{ 
+                    fontWeight: 'bold', 
+                    fontSize: '18px', 
+                    cursor: 'pointer', 
+                    color: '#1e3a8a', 
+                    textDecoration: 'underline' 
+                  }}
+                  onClick={() => handleProfileClick(post.authorName)}
+                  title={`View ${post.authorName}'s profile`}
+                >
                   {post.authorName || "Unknown"}
                 </span>
               </div>
