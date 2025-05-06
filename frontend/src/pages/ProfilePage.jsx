@@ -32,6 +32,10 @@ const ProfilePage = () => {
           ...post,
           liked: post.liked || false,
         }));
+
+        // ✅ Sort posts newest to oldest
+        postsWithLiked.sort((a, b) => new Date(b.datePosted) - new Date(a.datePosted));
+
         setUserPosts(postsWithLiked);
         fetchInitialCommentData(postsWithLiked);
       } catch (err) {
@@ -163,7 +167,6 @@ const ProfilePage = () => {
                   </div>
                 </div>
 
-                {/* Comments now BELOW entire post like in AccountPage */}
                 {showComments[post._id] && (
                   <div style={{ marginTop: '20px', paddingTop: '10px' }}>
                     {comments[post._id]?.map(comment => (
